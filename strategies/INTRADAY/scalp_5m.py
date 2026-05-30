@@ -51,7 +51,7 @@ BACKTESTING NOTES:
 from datetime import time as dtime
 import pandas as pd
 from strategies.base import BaseStrategy
-from utils.indicators import ema, macd
+from utils.indicators import ema, macd, atr
 from utils.helpers import now_et
 import config
 
@@ -65,7 +65,9 @@ MACD_SIG    = getattr(config, "SCALP5_MACD_SIG",    9)
 MIN_RIBBON  = getattr(config, "SCALP5_MIN_RIBBON", 0.002)   # 0.2% min gap
 OPEN_SKIP   = getattr(config, "SCALP5_OPEN_SKIP",  "09:45")
 EOD_CUTOFF  = getattr(config, "SCALP5_EOD_CUTOFF", "15:30")
-
+VOL_MULT    = getattr(config, "SCALP5_VOL_MULT",   1.3)    # volume confirmation on MACD cross
+ATR_PERIOD  = getattr(config, "SCALP5_ATR_PERIOD", 14)
+ATR_STOP_M  = getattr(config, "SCALP5_ATR_STOP_M", 1.5)    # hard stop multiplier
 
 def _parse_time(t_str: str) -> dtime:
     h, m = map(int, t_str.split(":"))
@@ -144,35 +146,56 @@ class ScalpFiveMin(BaseStrategy):
                 )
                 continue
 
-            close = bars["close"]
+            close  = bars["close"]
+            high   = bars["high"]
+            low    = bars["low"]
+            volume = bars["volume"]
 
             # ── Indicators ────────────────────────────────────────────────────
             ema_fast   = ema(close, EMA_FAST)
             ema_slow   = ema(close, EMA_SLOW)
             _, _, hist = macd(close, MACD_FAST, MACD_SLOW, MACD_SIG)
+            atr_vals   = atr(high, low, close, ATR_PERIOD)
 
             cur_price    = float(close.iloc[-1])
             cur_ema_fast = float(ema_fast.iloc[-1])
             cur_ema_slow = float(ema_slow.iloc[-1])
+            cur_atr      = float(atr_vals.iloc[-1])
 
             # Ribbon direction and gap
             ribbon_up    = cur_ema_fast > cur_ema_slow
             ribbon_gap   = abs(cur_ema_fast - cur_ema_slow) / cur_price
-            ribbon_ok    = ribbon_gap >= MIN_RIBBON   # enough separation = trending
+            ribbon_ok    = ribbon_gap >= MIN_RIBBON
             strength     = self._ribbon_strength(cur_ema_fast, cur_ema_slow, cur_price)
 
             # MACD histogram flip
             hist_up   = self._hist_crossed_up(hist)
             hist_down = self._hist_crossed_down(hist)
 
+            # Volume confirmation: current bar must be ≥ 1.3× rolling average
+            avg_vol = float(volume.rolling(20).mean().iloc[-1])
+            vol_ok  = float(volume.iloc[-1]) >= VOL_MULT * avg_vol
+
+            # 15-min trend alignment: resample 5-min bars → confirm EMA slope
+            close_15    = close.resample("15min").last().dropna()
+            ema_15      = ema(close_15, EMA_SLOW) if len(close_15) >= EMA_SLOW else None
+            trend_15_up = (
+                float(close_15.iloc[-1]) > float(ema_15.iloc[-1])
+                if ema_15 is not None and not ema_15.empty
+                else True  # allow if insufficient 15-min history
+            )
+
             # ── BUY conditions ────────────────────────────────────────────────
             if (
                 in_window
-                and ribbon_up               # EMAs say uptrend
-                and ribbon_ok               # ribbon wide enough (not choppy)
-                and hist_up                 # MACD just turned positive
+                and ribbon_up                 # EMAs say uptrend
+                and ribbon_ok                 # ribbon wide enough (not choppy)
+                and hist_up                   # MACD just turned positive
+                and vol_ok                    # 1.3× avg volume confirms cross
+                and trend_15_up               # 15-min trend aligned
                 and cur_price > cur_ema_fast  # price confirming above ribbon
             ):
+                stop_price = round(cur_price - ATR_STOP_M * cur_atr, 2)
                 signals.append({
                     "symbol":   symbol,
                     "signal":   "buy",
@@ -181,36 +204,17 @@ class ScalpFiveMin(BaseStrategy):
                         f"EMA{EMA_FAST} {cur_ema_fast:.2f} > "
                         f"EMA{EMA_SLOW} {cur_ema_slow:.2f} | "
                         f"MACD hist crossed up | "
-                        f"ribbon={ribbon_gap*100:.2f}%"
+                        f"vol {volume.iloc[-1]/avg_vol:.1f}× avg | "
+                        f"15m aligned | ribbon={ribbon_gap*100:.2f}%"
                     ),
-                    "price":    round(cur_price, 2),
-                    "ema_fast": round(cur_ema_fast, 2),
-                    "ema_slow": round(cur_ema_slow, 2),
+                    "price":      round(cur_price, 2),
+                    "stop_price": stop_price,
+                    "ema_fast":   round(cur_ema_fast, 2),
+                    "ema_slow":   round(cur_ema_slow, 2),
                     "ribbon_pct": round(ribbon_gap * 100, 2),
+                    "atr":        round(cur_atr, 4),
                 })
                 self.log.info(f"BUY  {symbol} | {signals[-1]['reason']}")
-
-            # ── SELL conditions ───────────────────────────────────────────────
-            elif hist_down or cur_price < cur_ema_fast:
-                reason_parts = []
-                if hist_down:
-                    reason_parts.append("MACD hist crossed down")
-                if cur_price < cur_ema_fast:
-                    reason_parts.append(
-                        f"Price {cur_price:.2f} broke below "
-                        f"EMA{EMA_FAST} {cur_ema_fast:.2f}"
-                    )
-
-                signals.append({
-                    "symbol":   symbol,
-                    "signal":   "sell",
-                    "strength": 1.0,
-                    "reason":   " | ".join(reason_parts),
-                    "price":    round(cur_price, 2),
-                    "ema_fast": round(cur_ema_fast, 2),
-                    "ema_slow": round(cur_ema_slow, 2),
-                })
-                self.log.info(f"SELL {symbol} | {signals[-1]['reason']}")
 
             # ── HOLD ─────────────────────────────────────────────────────────
             else:

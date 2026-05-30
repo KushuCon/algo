@@ -131,7 +131,8 @@ class ScalpOneMin(BaseStrategy):
 
         for symbol, bars in all_bars.items():
             # ── Guard: need enough bars for all indicators ────────────────────
-            min_bars = max(RSI_PERIOD, VOL_PERIOD) + 5
+            # ── Guard: need enough bars for all indicators ────────────────────
+            min_bars = max(RSI_PERIOD, VOL_PERIOD, ADX_PERIOD) + 5
             if bars is None or len(bars) < min_bars:
                 self.log.warning(
                     f"{symbol}: need {min_bars} bars, got "
@@ -148,21 +149,44 @@ class ScalpOneMin(BaseStrategy):
             # ── Indicators ────────────────────────────────────────────────────
             rsi_vals  = rsi(close, RSI_PERIOD)
             vwap_vals = vwap_session(high, low, close, volume, bars.index)
+            adx_vals  = adx(high, low, close, ADX_PERIOD)
 
-            cur_rsi  = float(rsi_vals.iloc[-1])
-            cur_vwap = float(vwap_vals.iloc[-1])
-            cur_price= float(close.iloc[-1])
-            vol_ratio= self._vol_ratio(volume)
+            cur_rsi   = float(rsi_vals.iloc[-1])
+            cur_vwap  = float(vwap_vals.iloc[-1])
+            cur_price = float(close.iloc[-1])
+            cur_adx   = float(adx_vals.iloc[-1])
+            vol_ratio = self._vol_ratio(volume)
+
+            # ── Pre-market gap filter ─────────────────────────────────────────
+            today = now_et().date()
+            if hasattr(bars.index, "tz") and bars.index.tz is not None:
+                bar_dates = bars.index.tz_convert(ET).date
+            else:
+                bar_dates = pd.to_datetime(bars.index).tz_localize("UTC").tz_convert(ET).date
+            prev_mask  = bar_dates < today
+            today_mask = bar_dates == today
+            gap_too_large = False
+            if prev_mask.any() and today_mask.any():
+                prev_close    = float(close[prev_mask].iloc[-1])
+                today_open    = float(bars["open"][today_mask].iloc[0])
+                gap_pct       = abs(today_open - prev_close) / (prev_close + 1e-9)
+                gap_too_large = gap_pct > GAP_SKIP_PCT
+
+            # ── VIX size scalar ───────────────────────────────────────────────
+            vix        = float(getattr(config, "LIVE_VIX", 0))
+            vix_scalar = 0.5 if vix > VIX_THRESH else 1.0
 
             # ── BUY conditions ────────────────────────────────────────────────
             if (
                 not eod                        # respect EOD cutoff
+                and not gap_too_large          # skip gapped opens > 2%
+                and cur_adx   > 20             # trending — not choppy
                 and cur_price < cur_vwap       # below fair value
                 and cur_rsi   < RSI_OVERSOLD   # oversold
                 and vol_ratio >= VOL_MULT       # volume spike confirms
             ):
-                # Strength: volume ratio scaled to 0.0–1.0 (cap at 3× avg → 1.0)
-                strength = min(1.0, (vol_ratio - 1.0) / 2.0)
+                # Strength: volume ratio scaled 0–1; halved when VIX elevated
+                strength = min(1.0, (vol_ratio - 1.0) / 2.0) * vix_scalar
 
                 signals.append({
                     "symbol":   symbol,
@@ -171,11 +195,14 @@ class ScalpOneMin(BaseStrategy):
                     "reason": (
                         f"Price {cur_price:.2f} below VWAP {cur_vwap:.2f} | "
                         f"RSI {cur_rsi:.1f} < {RSI_OVERSOLD} | "
+                        f"ADX {cur_adx:.1f} | "
                         f"Vol {vol_ratio:.1f}× avg"
+                        + (f" | VIX>{VIX_THRESH} size×0.5" if vix_scalar < 1 else "")
                     ),
                     "price":    round(cur_price, 2),
                     "vwap":     round(cur_vwap, 2),
                     "rsi":      round(cur_rsi, 1),
+                    "adx":      round(cur_adx, 1),
                     "vol_ratio":round(vol_ratio, 2),
                 })
                 self.log.info(f"BUY  {symbol} | {signals[-1]['reason']}")

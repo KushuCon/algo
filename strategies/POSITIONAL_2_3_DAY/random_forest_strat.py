@@ -28,15 +28,17 @@ import config
 RF_TRAIN_BARS    = getattr(config, "RF_TRAIN_BARS",    200)
 RF_N_ESTIMATORS  = getattr(config, "RF_N_ESTIMATORS",  100)
 RF_MAX_DEPTH     = getattr(config, "RF_MAX_DEPTH",      5)
-RF_BUY_THRESH    = getattr(config, "RF_BUY_THRESH",     0.60)
-RF_SELL_THRESH   = getattr(config, "RF_SELL_THRESH",    0.40)
-RF_RETRAIN_EVERY = getattr(config, "RF_RETRAIN_EVERY",  1)   # cycles between retrains
+RF_BUY_THRESH    = getattr(config, "RF_BUY_THRESH",     0.65)
+RF_SELL_THRESH   = getattr(config, "RF_SELL_THRESH",    0.35)
+RF_RETRAIN_EVERY = getattr(config, "RF_RETRAIN_EVERY",  3)   # retrain every 3 cycles
 
 
-def _build_features(bars: pd.DataFrame) -> pd.DataFrame:
+def _build_features(bars: pd.DataFrame,
+                    sector_close: pd.Series | None = None) -> pd.DataFrame:
     """
     Construct feature matrix from OHLCV bars.
     Each row = one trading day. All features are lag-safe (no future data).
+    sector_close: optional aligned close series (e.g. SPY) for sector momentum feature.
     """
     close  = bars["close"]
     high   = bars["high"]
@@ -53,24 +55,39 @@ def _build_features(bars: pd.DataFrame) -> pd.DataFrame:
     ema9       = ema(close, 9)
     ema21      = ema(close, 21)
 
-    bb_pct     = (close - lower) / (upper - lower + 1e-9)   # 0=at lower, 1=at upper
-    vol_ratio  = volume / volume.rolling(20).mean()          # relative volume
+    bb_pct    = (close - lower) / (upper - lower + 1e-9)
+    vol_ratio = volume / volume.rolling(20).mean()
+
+    # ── VWAP distance (10-day rolling) ────────────────────────────────────────
+    typical   = (high + low + close) / 3
+    roll_vwap = ((typical * volume).rolling(10).sum()
+                 / (volume.rolling(10).sum() + 1e-9))
+    vwap_dist = (close - roll_vwap) / (roll_vwap + 1e-9)   # +ve = above VWAP
+
+    # ── Sector / market momentum ──────────────────────────────────────────────
+    # Pass SPY (or sector ETF) bars in generate_signals; falls back to zeros.
+    if sector_close is not None:
+        sec_aligned = sector_close.reindex(close.index, method="ffill")
+        sector_mom5 = sec_aligned.pct_change(5)
+    else:
+        sector_mom5 = pd.Series(np.zeros(len(close)), index=close.index)
 
     feat = pd.DataFrame({
-        "rsi14":      rsi14,
-        "macd_hist":  hist,
-        "bb_pct":     bb_pct,
-        "atr_norm":   atr14 / close,            # normalise by price
-        "mom10":      mom10,
-        "mom20":      mom20,
-        "ema_ratio":  ema9 / ema21 - 1,         # fast/slow spread
-        "vol_ratio":  vol_ratio,
-        "ret_1d":     close.pct_change(1),
-        "ret_5d":     close.pct_change(5),
+        "rsi14":       rsi14,
+        "macd_hist":   hist,
+        "bb_pct":      bb_pct,
+        "atr_norm":    atr14 / close,
+        "mom10":       mom10,
+        "mom20":       mom20,
+        "ema_ratio":   ema9 / ema21 - 1,
+        "vol_ratio":   vol_ratio,
+        "ret_1d":      close.pct_change(1),
+        "ret_5d":      close.pct_change(5),
+        "vwap_dist":   vwap_dist,    # new
+        "sector_mom5": sector_mom5,  # new
     }, index=close.index)
 
     return feat.dropna()
-
 
 class RandomForestStrategy(BaseStrategy):
     """
@@ -97,9 +114,10 @@ class RandomForestStrategy(BaseStrategy):
 
     # ── training ──────────────────────────────────────────────────────────────
 
-    def _train(self, symbol: str, bars: pd.DataFrame) -> bool:
+    def _train(self, symbol: str, bars: pd.DataFrame,
+               sector_close: pd.Series | None = None) -> bool:
         """Train (or retrain) the Random Forest for `symbol`. Returns success."""
-        feat = _build_features(bars)
+        feat = _build_features(bars, sector_close=sector_close)
         close_aligned = bars["close"].reindex(feat.index)
 
         # Label: 1 if next day is up, 0 otherwise — shift(-1) = next day's return
@@ -140,12 +158,13 @@ class RandomForestStrategy(BaseStrategy):
 
     # ── prediction ────────────────────────────────────────────────────────────
 
-    def _predict_proba_up(self, symbol: str, bars: pd.DataFrame) -> float | None:
+    def _predict_proba_up(self, symbol: str, bars: pd.DataFrame,
+                          sector_close: pd.Series | None = None) -> float | None:
         """Return probability of 'up' move for the next bar, or None on failure."""
         if symbol not in self._models:
             return None
 
-        feat = _build_features(bars)
+        feat = _build_features(bars, sector_close=sector_close)
         if feat.empty:
             return None
 
@@ -165,6 +184,13 @@ class RandomForestStrategy(BaseStrategy):
         self._cycle_cnt += 1
         should_retrain = (self._cycle_cnt % self.retrain_every == 0)
 
+        # Use SPY as sector/market proxy; None if not in universe
+        spy_close = (
+            all_bars["SPY"]["close"]
+            if "SPY" in all_bars and all_bars["SPY"] is not None
+            else None
+        )
+
         signals = []
         for symbol, bars in all_bars.items():
             if bars is None or len(bars) < self.train_bars + 30:
@@ -181,7 +207,7 @@ class RandomForestStrategy(BaseStrategy):
 
             # Train / retrain
             if should_retrain or symbol not in self._models:
-                ok = self._train(symbol, bars)
+                ok = self._train(symbol, bars, sector_close=spy_close)
                 if not ok:
                     signals.append({
                         "symbol": symbol, "signal": "hold",
@@ -190,7 +216,7 @@ class RandomForestStrategy(BaseStrategy):
                     })
                     continue
 
-            prob_up = self._predict_proba_up(symbol, bars)
+            prob_up = self._predict_proba_up(symbol, bars, sector_close=spy_close)
             if prob_up is None:
                 signals.append({
                     "symbol": symbol, "signal": "hold",

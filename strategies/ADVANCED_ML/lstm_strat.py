@@ -19,12 +19,14 @@ error and emits HOLD for all symbols rather than crashing the bot.
 
 import numpy as np
 import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
 
 from strategies.base import BaseStrategy
-from utils.indicators import rsi, macd, bollinger_bands, atr, momentum, ema
+from utils.indicators import rsi, macd, bollinger_bands, atr, momentum, ema, adx
 import config
 
-LSTM_SEQ_LEN     = getattr(config, "LSTM_SEQ_LEN",       20)    # input window (bars)
+LSTM_SEQ_LEN     = getattr(config, "LSTM_SEQ_LEN",       10)    # input window — reduced from 20    # input window (bars)
 LSTM_TRAIN_BARS  = getattr(config, "LSTM_TRAIN_BARS",    300)    # training set size
 LSTM_HIDDEN      = getattr(config, "LSTM_HIDDEN",         64)
 LSTM_LAYERS      = getattr(config, "LSTM_LAYERS",          2)
@@ -87,6 +89,9 @@ def _build_features(bars: pd.DataFrame) -> pd.DataFrame:
     ema9              = ema(close, 9)
     ema21             = ema(close, 21)
 
+    adx14  = adx(high, low, close, 14)
+    regime = (adx14 > 25).astype(float)   # 1.0 = trending, 0.0 = ranging
+
     feat = pd.DataFrame({
         "rsi14":     rsi14,
         "macd_hist": macd_hist,
@@ -98,6 +103,7 @@ def _build_features(bars: pd.DataFrame) -> pd.DataFrame:
         "vol_ratio": volume / volume.rolling(20).mean(),
         "ret_1d":    close.pct_change(1),
         "ret_5d":    close.pct_change(5),
+        "regime":    regime,   # new: market regime indicator
     }, index=close.index)
 
     return feat.dropna()
@@ -127,6 +133,9 @@ class LSTMStrategy(BaseStrategy):
         self._models: dict[str, "_LSTMNet"] = {}
         self._scalers_mean: dict[str, np.ndarray] = {}
         self._scalers_std:  dict[str, np.ndarray] = {}
+        # RF ensemble
+        self._rf_models:  dict[str, RandomForestClassifier] = {}
+        self._rf_scalers: dict[str, StandardScaler]         = {}
         self._cycle_cnt = 0
 
         if not _TORCH_OK:
@@ -141,6 +150,33 @@ class LSTMStrategy(BaseStrategy):
                 f"epochs={self.epochs}, retrain_every={self.retrain_every}"
             )
 
+    # ── RF ensemble helpers ───────────────────────────────────────────────────
+
+    def _train_rf(self, symbol: str,
+                  feat_2d: np.ndarray, labels: np.ndarray) -> None:
+        """Train a lightweight RF on the same feature set for ensemble gating."""
+        if len(feat_2d) < 50:
+            return
+        scaler = StandardScaler()
+        X = scaler.fit_transform(feat_2d[-self.train_bars:])
+        y = labels[-self.train_bars:]
+        clf = RandomForestClassifier(n_estimators=50, max_depth=4,
+                                     n_jobs=-1, random_state=42)
+        clf.fit(X, y)
+        self._rf_models[symbol]  = clf
+        self._rf_scalers[symbol] = scaler
+
+    def _rf_predict(self, symbol: str, feat_row: np.ndarray) -> float:
+        """RF P(up). Returns 0.5 (neutral) when model is absent."""
+        if symbol not in self._rf_models:
+            return 0.5
+        X = self._rf_scalers[symbol].transform(feat_row[np.newaxis])
+        proba   = self._rf_models[symbol].predict_proba(X)[0]
+        classes = list(self._rf_models[symbol].classes_)
+        up_idx  = classes.index(1) if 1 in classes else -1
+        return float(proba[up_idx]) if up_idx >= 0 else 0.5
+
+    
     # ── normalisation ─────────────────────────────────────────────────────────
 
     def _normalise(self, X: np.ndarray, symbol: str,
@@ -216,9 +252,13 @@ class LSTMStrategy(BaseStrategy):
             final_loss = epoch_loss / len(loader)
 
         self._models[symbol] = model
+
+        # Train RF ensemble on the same flat (unsequenced) features
+        self._train_rf(symbol, raw, labels)
+
         self.log.info(
             f"LSTM trained: {symbol} | seqs={len(X_seq)} | "
-            f"final_loss={final_loss:.4f}"
+            f"final_loss={final_loss:.4f} | RF ensemble updated"
         )
         return True
 
@@ -289,35 +329,48 @@ class LSTMStrategy(BaseStrategy):
                 })
                 continue
 
-            if prob_up >= self.buy_thresh:
+            # ── RF ensemble agreement gate ─────────────────────────────────────
+            feat_df  = _build_features(bars)
+            rf_prob  = (self._rf_predict(symbol, feat_df.values[-1])
+                        if not feat_df.empty else 0.5)
+
+            lstm_buy  = prob_up >= self.buy_thresh
+            lstm_sell = prob_up <= self.sell_thresh
+            rf_buy    = rf_prob  >= self.buy_thresh
+            rf_sell   = rf_prob  <= self.sell_thresh
+
+            if lstm_buy and rf_buy:
                 signals.append({
                     "symbol":   symbol,
                     "signal":   "buy",
-                    "strength": round(prob_up, 3),
-                    "reason":   f"LSTM P(up)={prob_up:.2%} ≥ {self.buy_thresh:.0%}",
+                    "strength": round((prob_up + rf_prob) / 2, 3),
+                    "reason":   f"LSTM={prob_up:.2%} + RF={rf_prob:.2%} both agree ↑",
                     "prob_up":  round(prob_up, 4),
+                    "rf_prob":  round(rf_prob, 4),
                     "price":    round(price, 2),
                 })
-                self.log.info(f"BUY {symbol} | LSTM P(up)={prob_up:.2%}")
+                self.log.info(f"BUY {symbol} | LSTM={prob_up:.2%} RF={rf_prob:.2%}")
 
-            elif prob_up <= self.sell_thresh:
+            elif lstm_sell and rf_sell:
                 signals.append({
                     "symbol":   symbol,
                     "signal":   "sell",
-                    "strength": round(1.0 - prob_up, 3),
-                    "reason":   f"LSTM P(up)={prob_up:.2%} ≤ {self.sell_thresh:.0%}",
+                    "strength": round((2.0 - prob_up - rf_prob) / 2, 3),
+                    "reason":   f"LSTM={prob_up:.2%} + RF={rf_prob:.2%} both agree ↓",
                     "prob_up":  round(prob_up, 4),
+                    "rf_prob":  round(rf_prob, 4),
                     "price":    round(price, 2),
                 })
-                self.log.info(f"SELL {symbol} | LSTM P(up)={prob_up:.2%}")
+                self.log.info(f"SELL {symbol} | LSTM={prob_up:.2%} RF={rf_prob:.2%}")
 
             else:
                 signals.append({
                     "symbol":   symbol,
                     "signal":   "hold",
                     "strength": 0.0,
-                    "reason":   f"LSTM P(up)={prob_up:.2%} in neutral zone",
+                    "reason":   f"No ensemble agreement | LSTM={prob_up:.2%} RF={rf_prob:.2%}",
                     "prob_up":  round(prob_up, 4),
+                    "rf_prob":  round(rf_prob, 4),
                     "price":    round(price, 2),
                 })
 
