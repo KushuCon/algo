@@ -528,10 +528,21 @@ def main():
     print_report(args.strategy, args.symbols, results, metrics)
 
     # Save equity curve + trades to CSV
+    # Save equity curve + trades to CSV (existing logs)
     results["equity_curve"].to_csv("logs/backtest_equity.csv")
     if not results["trades"].empty:
         results["trades"].to_csv("logs/backtest_trades.csv", index=False)
     log.info("Results saved to logs/backtest_equity.csv and logs/backtest_trades.csv")
+
+    # ── Auto-generate HTML report + CSV in /reports/ ──────────────────────────
+    from utils.report_generator import generate_report
+    generate_report(
+        strategy_name=args.strategy,
+        symbols=args.symbols,
+        results=results,
+        metrics=metrics,
+        days=args.days,
+    )
 
 
 if __name__ == "__main__":

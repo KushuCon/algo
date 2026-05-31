@@ -1,0 +1,1727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Backtest Report — MOMENTUM</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f172a; --card: #1e293b; --border: #334155;
+    --text: #e2e8f0; --muted: #94a3b8; --accent: #6366f1;
+    --green: #22c55e; --red: #ef4444; --yellow: #f59e0b; --blue: #38bdf8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; line-height: 1.6; }
+  .page { max-width: 1280px; margin: 0 auto; padding: 24px 20px; }
+
+  /* header */
+  .header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 28px; flex-wrap: wrap; gap: 12px; }
+  .header h1 { font-size: 26px; font-weight: 700; letter-spacing: -.5px; }
+  .header h1 span { color: var(--accent); }
+  .meta { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .badge-run { background: var(--accent); color: #fff; border-radius: 6px; padding: 4px 12px; font-size: 12px; font-weight: 600; }
+
+  /* KPI grid */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; margin-bottom: 28px; }
+  .kpi { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+  .kpi .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; }
+  .kpi .value { font-size: 22px; font-weight: 700; }
+  .kpi .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* chart card */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+  .card-title { font-size: 15px; font-weight: 600; margin-bottom: 14px; color: var(--text); }
+  .chart-wrap { position: relative; height: 280px; }
+
+  /* tables */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: #0f172a; }
+  th { padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 9px 12px; border-bottom: 1px solid #1e293b; font-size: 13px; white-space: nowrap; }
+  tr:hover td { background: rgba(99,102,241,.07); }
+  td.sym { font-weight: 700; color: var(--accent); font-size: 14px; }
+
+  /* badges */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+  .badge.green { background: rgba(34,197,94,.15); color: var(--green); }
+  .badge.red   { background: rgba(239,68,68,.15);  color: var(--red);   }
+  .badge.blue  { background: rgba(56,189,248,.15); color: var(--blue);  }
+  .badge.gray  { background: rgba(148,163,184,.1); color: var(--muted); }
+
+  /* highlights row */
+  .highlights { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 24px; }
+  .hl { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 18px; flex: 1; min-width: 180px; }
+  .hl .hl-label { font-size: 11px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
+  .hl .hl-val   { font-size: 15px; font-weight: 700; }
+
+  /* footer */
+  footer { text-align: center; color: var(--muted); font-size: 11px; margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <h1>Backtest Report — <span>MOMENTUM</span></h1>
+      <div class="meta">
+        Symbols: DELL · NOW · PLTR · NVDA · AMD · ARM · MU · QCOM · MRVL &nbsp;|&nbsp;
+        Period: 365d &nbsp;|&nbsp;
+        Generated: 2026-05-31 14:50:28
+      </div>
+    </div>
+    <span class="badge-run">algo v1</span>
+  </div>
+
+  <!-- KPI Grid -->
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="label">Total Return</div>
+      <div class="value" style="color:#22c55e">+19.85%</div>
+      <div class="sub">$100,000 → $119,845</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Net P&amp;L</div>
+      <div class="value" style="color:#22c55e">+$19,845.27</div>
+      <div class="sub">absolute dollars</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Annual Return</div>
+      <div class="value" style="color:#22c55e">+14.97%</div>
+      <div class="sub">annualised</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Sharpe Ratio</div>
+      <div class="value">1.945</div>
+      <div class="sub">risk-adjusted</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Calmar Ratio</div>
+      <div class="value">3.682</div>
+      <div class="sub">return / max-dd</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Max Drawdown</div>
+      <div class="value" style="color:var(--red)">-4.07%</div>
+      <div class="sub">peak → trough</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Win Rate</div>
+      <div class="value">43.1%</div>
+      <div class="sub">50 / 116 trades</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Avg Hold</div>
+      <div class="value">4.2d</div>
+      <div class="sub">max 27d</div>
+    </div>
+  </div>
+
+  <!-- Equity Curve -->
+  <div class="card">
+    <div class="card-title">📈 Equity Curve</div>
+    <div class="chart-wrap">
+      <canvas id="eqChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Trade Highlights -->
+  <div class="highlights">
+    <div class="hl">
+      <div class="hl-label">🏆 Best Trade</div>
+      <div class="hl-val" style="color:var(--green)">DELL +38.25% in 3d</div>
+    </div>
+    <div class="hl">
+      <div class="hl-label">💥 Worst Trade</div>
+      <div class="hl-val" style="color:var(--red)">MU -11.85% in 2d</div>
+    </div>
+    <div class="hl">
+      <div class="hl-label">💰 Avg Win P&amp;L</div>
+      <div class="hl-val" style="color:var(--green)">$897.48</div>
+    </div>
+    <div class="hl">
+      <div class="hl-label">📉 Avg Loss P&amp;L</div>
+      <div class="hl-val" style="color:var(--red)">$-397.28</div>
+    </div>
+  </div>
+
+  <!-- Per-Symbol Summary -->
+  <div class="card">
+    <div class="card-title">📊 Per-Symbol Performance</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Symbol</th><th>Trades</th><th>Win Rate</th>
+          <th>Total P&amp;L</th><th>Avg Hold</th>
+          <th>Best %</th><th>Worst %</th>
+        </tr></thead>
+        <tbody>
+            <tr>
+              <td class="sym">AMD</td>
+              <td>17</td>
+              <td>41.2%</td>
+              <td style="color:#22c55e;font-weight:600">$3,832.66</td>
+              <td>5.2d</td>
+              <td style="color:#22c55e">+23.43%</td>
+              <td style="color:#ef4444">-8.80%</td>
+            </tr>
+            <tr>
+              <td class="sym">ARM</td>
+              <td>17</td>
+              <td>41.2%</td>
+              <td style="color:#22c55e;font-weight:600">$647.17</td>
+              <td>4.4d</td>
+              <td style="color:#22c55e">+18.58%</td>
+              <td style="color:#ef4444">-10.15%</td>
+            </tr>
+            <tr>
+              <td class="sym">DELL</td>
+              <td>17</td>
+              <td>35.3%</td>
+              <td style="color:#22c55e;font-weight:600">$5,211.83</td>
+              <td>3.4d</td>
+              <td style="color:#22c55e">+38.25%</td>
+              <td style="color:#ef4444">-5.97%</td>
+            </tr>
+            <tr>
+              <td class="sym">MRVL</td>
+              <td>15</td>
+              <td>40.0%</td>
+              <td style="color:#22c55e;font-weight:600">$1,605.11</td>
+              <td>3.9d</td>
+              <td style="color:#22c55e">+12.22%</td>
+              <td style="color:#ef4444">-8.95%</td>
+            </tr>
+            <tr>
+              <td class="sym">MU</td>
+              <td>18</td>
+              <td>50.0%</td>
+              <td style="color:#22c55e;font-weight:600">$2,894.16</td>
+              <td>3.7d</td>
+              <td style="color:#22c55e">+16.67%</td>
+              <td style="color:#ef4444">-11.85%</td>
+            </tr>
+            <tr>
+              <td class="sym">NOW</td>
+              <td>1</td>
+              <td>0.0%</td>
+              <td style="color:#22c55e;font-weight:600">$0.00</td>
+              <td>0.0d</td>
+              <td style="color:#22c55e">+0.00%</td>
+              <td style="color:#22c55e">+0.00%</td>
+            </tr>
+            <tr>
+              <td class="sym">NVDA</td>
+              <td>8</td>
+              <td>50.0%</td>
+              <td style="color:#22c55e;font-weight:600">$792.69</td>
+              <td>6.9d</td>
+              <td style="color:#22c55e">+6.76%</td>
+              <td style="color:#ef4444">-4.15%</td>
+            </tr>
+            <tr>
+              <td class="sym">PLTR</td>
+              <td>12</td>
+              <td>50.0%</td>
+              <td style="color:#22c55e;font-weight:600">$659.49</td>
+              <td>3.2d</td>
+              <td style="color:#22c55e">+9.47%</td>
+              <td style="color:#ef4444">-9.03%</td>
+            </tr>
+            <tr>
+              <td class="sym">QCOM</td>
+              <td>11</td>
+              <td>45.5%</td>
+              <td style="color:#22c55e;font-weight:600">$4,202.14</td>
+              <td>4.7d</td>
+              <td style="color:#22c55e">+20.62%</td>
+              <td style="color:#ef4444">-6.29%</td>
+            </tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Full Trade Log -->
+  <div class="card">
+    <div class="card-title">📋 Full Trade Log</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Symbol</th><th>Entry Date</th><th>Exit Date</th>
+          <th>Hold</th><th>Entry $</th><th>Exit $</th>
+          <th>Qty</th><th>% Gain</th><th>P&amp;L</th><th>Exit Type</th>
+        </tr></thead>
+        <tbody>
+            <tr>
+              <td class="sym">PLTR</td>
+              <td>2025-05-06</td>
+              <td>2025-05-08</td>
+              <td><strong>2d</strong></td>
+              <td>$108.86</td>
+              <td>$119.16</td>
+              <td>91</td>
+              <td style="color:#22c55e;font-weight:700">+9.47%</td>
+              <td style="color:#22c55e;font-weight:600">$937.75</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">AMD</td>
+              <td>2025-05-07</td>
+              <td>2025-05-12</td>
+              <td><strong>5d</strong></td>
+              <td>$100.36</td>
+              <td>$108.16</td>
+              <td>99</td>
+              <td style="color:#22c55e;font-weight:700">+7.77%</td>
+              <td style="color:#22c55e;font-weight:600">$772.20</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">ARM</td>
+              <td>2025-05-08</td>
+              <td>2025-05-12</td>
+              <td><strong>4d</strong></td>
+              <td>$116.56</td>
+              <td>$124.80</td>
+              <td>54</td>
+              <td style="color:#22c55e;font-weight:700">+7.07%</td>
+              <td style="color:#22c55e;font-weight:600">$444.96</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MU</td>
+              <td>2025-05-12</td>
+              <td>2025-05-16</td>
+              <td><strong>4d</strong></td>
+              <td>$92.31</td>
+              <td>$98.06</td>
+              <td>110</td>
+              <td style="color:#22c55e;font-weight:700">+6.23%</td>
+              <td style="color:#22c55e;font-weight:600">$632.50</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">DELL</td>
+              <td>2025-05-12</td>
+              <td>2025-05-14</td>
+              <td><strong>2d</strong></td>
+              <td>$103.44</td>
+              <td>$111.01</td>
+              <td>98</td>
+              <td style="color:#22c55e;font-weight:700">+7.32%</td>
+              <td style="color:#22c55e;font-weight:600">$741.86</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">AMD</td>
+              <td>2025-05-13</td>
+              <td>2025-06-09</td>
+              <td><strong>27d</strong></td>
+              <td>$112.43</td>
+              <td>$121.80</td>
+              <td>91</td>
+              <td style="color:#22c55e;font-weight:700">+8.33%</td>
+              <td style="color:#22c55e;font-weight:600">$852.67</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MRVL</td>
+              <td>2025-05-13</td>
+              <td>2025-05-16</td>
+              <td><strong>3d</strong></td>
+              <td>$65.46</td>
+              <td>$63.76</td>
+              <td>157</td>
+              <td style="color:#ef4444;font-weight:700">-2.60%</td>
+              <td style="color:#ef4444;font-weight:600">$-266.90</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">NVDA</td>
+              <td>2025-05-28</td>
+              <td>2025-06-10</td>
+              <td><strong>13d</strong></td>
+              <td>$134.83</td>
+              <td>$143.95</td>
+              <td>76</td>
+              <td style="color:#22c55e;font-weight:700">+6.76%</td>
+              <td style="color:#22c55e;font-weight:600">$693.12</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">DELL</td>
+              <td>2025-05-29</td>
+              <td>2025-05-30</td>
+              <td><strong>1d</strong></td>
+              <td>$113.55</td>
+              <td>$111.27</td>
+              <td>91</td>
+              <td style="color:#ef4444;font-weight:700">-2.01%</td>
+              <td style="color:#ef4444;font-weight:600">$-207.48</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MRVL</td>
+              <td>2025-05-29</td>
+              <td>2025-05-30</td>
+              <td><strong>1d</strong></td>
+              <td>$63.73</td>
+              <td>$60.12</td>
+              <td>100</td>
+              <td style="color:#ef4444;font-weight:700">-5.66%</td>
+              <td style="color:#ef4444;font-weight:600">$-361.00</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">PLTR</td>
+              <td>2025-05-30</td>
+              <td>2025-06-05</td>
+              <td><strong>6d</strong></td>
+              <td>$131.85</td>
+              <td>$119.95</td>
+              <td>69</td>
+              <td style="color:#ef4444;font-weight:700">-9.03%</td>
+              <td style="color:#ef4444;font-weight:600">$-821.10</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">DELL</td>
+              <td>2025-05-30</td>
+              <td>2025-06-02</td>
+              <td><strong>3d</strong></td>
+              <td>$111.27</td>
+              <td>$108.06</td>
+              <td>92</td>
+              <td style="color:#ef4444;font-weight:700">-2.88%</td>
+              <td style="color:#ef4444;font-weight:600">$-295.32</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">PLTR</td>
+              <td>2025-06-05</td>
+              <td>2025-06-06</td>
+              <td><strong>1d</strong></td>
+              <td>$119.95</td>
+              <td>$127.68</td>
+              <td>48</td>
+              <td style="color:#22c55e;font-weight:700">+6.44%</td>
+              <td style="color:#22c55e;font-weight:600">$371.04</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">AMD</td>
+              <td>2025-06-09</td>
+              <td>2025-06-12</td>
+              <td><strong>3d</strong></td>
+              <td>$121.80</td>
+              <td>$118.48</td>
+              <td>84</td>
+              <td style="color:#ef4444;font-weight:700">-2.73%</td>
+              <td style="color:#ef4444;font-weight:600">$-278.88</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">DELL</td>
+              <td>2025-06-10</td>
+              <td>2025-06-13</td>
+              <td><strong>3d</strong></td>
+              <td>$113.26</td>
+              <td>$109.56</td>
+              <td>57</td>
+              <td style="color:#ef4444;font-weight:700">-3.27%</td>
+              <td style="color:#ef4444;font-weight:600">$-210.90</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">QCOM</td>
+              <td>2025-06-11</td>
+              <td>2025-06-13</td>
+              <td><strong>2d</strong></td>
+              <td>$159.50</td>
+              <td>$154.73</td>
+              <td>23</td>
+              <td style="color:#ef4444;font-weight:700">-2.99%</td>
+              <td style="color:#ef4444;font-weight:600">$-109.71</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MRVL</td>
+              <td>2025-06-17</td>
+              <td>2025-06-18</td>
+              <td><strong>1d</strong></td>
+              <td>$70.03</td>
+              <td>$74.94</td>
+              <td>117</td>
+              <td style="color:#22c55e;font-weight:700">+7.00%</td>
+              <td style="color:#22c55e;font-weight:600">$573.89</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">AMD</td>
+              <td>2025-06-17</td>
+              <td>2025-06-24</td>
+              <td><strong>7d</strong></td>
+              <td>$127.09</td>
+              <td>$138.48</td>
+              <td>58</td>
+              <td style="color:#22c55e;font-weight:700">+8.96%</td>
+              <td style="color:#22c55e;font-weight:600">$660.33</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">AMD</td>
+              <td>2025-06-25</td>
+              <td>2025-07-01</td>
+              <td><strong>6d</strong></td>
+              <td>$143.41</td>
+              <td>$136.09</td>
+              <td>72</td>
+              <td style="color:#ef4444;font-weight:700">-5.11%</td>
+              <td style="color:#ef4444;font-weight:600">$-527.40</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MU</td>
+              <td>2025-06-26</td>
+              <td>2025-06-30</td>
+              <td><strong>4d</strong></td>
+              <td>$126.02</td>
+              <td>$123.18</td>
+              <td>82</td>
+              <td style="color:#ef4444;font-weight:700">-2.25%</td>
+              <td style="color:#ef4444;font-weight:600">$-232.88</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">ARM</td>
+              <td>2025-06-26</td>
+              <td>2025-07-02</td>
+              <td><strong>6d</strong></td>
+              <td>$158.10</td>
+              <td>$154.66</td>
+              <td>65</td>
+              <td style="color:#ef4444;font-weight:700">-2.18%</td>
+              <td style="color:#ef4444;font-weight:600">$-223.60</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">PLTR</td>
+              <td>2025-06-27</td>
+              <td>2025-07-01</td>
+              <td><strong>4d</strong></td>
+              <td>$130.81</td>
+              <td>$130.67</td>
+              <td>36</td>
+              <td style="color:#ef4444;font-weight:700">-0.11%</td>
+              <td style="color:#ef4444;font-weight:600">$-5.22</td>
+              <td><span class="badge blue">→ Sell</span></td>
+            </tr>
+            <tr>
+              <td class="sym">NVDA</td>
+              <td>2025-07-01</td>
+              <td>2025-07-09</td>
+              <td><strong>8d</strong></td>
+              <td>$153.34</td>
+              <td>$162.83</td>
+              <td>52</td>
+              <td style="color:#22c55e;font-weight:700">+6.19%</td>
+              <td style="color:#22c55e;font-weight:600">$493.48</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">QCOM</td>
+              <td>2025-07-01</td>
+              <td>2025-07-11</td>
+              <td><strong>10d</strong></td>
+              <td>$159.41</td>
+              <td>$157.42</td>
+              <td>37</td>
+              <td style="color:#ef4444;font-weight:700">-1.25%</td>
+              <td style="color:#ef4444;font-weight:600">$-73.63</td>
+              <td><span class="badge blue">→ Sell</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MRVL</td>
+              <td>2025-07-02</td>
+              <td>2025-07-07</td>
+              <td><strong>5d</strong></td>
+              <td>$74.26</td>
+              <td>$71.54</td>
+              <td>139</td>
+              <td style="color:#ef4444;font-weight:700">-3.66%</td>
+              <td style="color:#ef4444;font-weight:600">$-378.08</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MU</td>
+              <td>2025-07-02</td>
+              <td>2025-07-14</td>
+              <td><strong>12d</strong></td>
+              <td>$121.71</td>
+              <td>$118.61</td>
+              <td>84</td>
+              <td style="color:#ef4444;font-weight:700">-2.55%</td>
+              <td style="color:#ef4444;font-weight:600">$-260.40</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">PLTR</td>
+              <td>2025-07-14</td>
+              <td>2025-07-25</td>
+              <td><strong>11d</strong></td>
+              <td>$149.16</td>
+              <td>$158.84</td>
+              <td>47</td>
+              <td style="color:#22c55e;font-weight:700">+6.49%</td>
+              <td style="color:#22c55e;font-weight:600">$454.96</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">NVDA</td>
+              <td>2025-07-15</td>
+              <td>2025-07-22</td>
+              <td><strong>7d</strong></td>
+              <td>$170.66</td>
+              <td>$167.01</td>
+              <td>60</td>
+              <td style="color:#ef4444;font-weight:700">-2.14%</td>
+              <td style="color:#ef4444;font-weight:600">$-218.70</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">DELL</td>
+              <td>2025-07-18</td>
+              <td>2025-07-22</td>
+              <td><strong>4d</strong></td>
+              <td>$131.23</td>
+              <td>$124.36</td>
+              <td>66</td>
+              <td style="color:#ef4444;font-weight:700">-5.24%</td>
+              <td style="color:#ef4444;font-weight:600">$-453.42</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">AMD</td>
+              <td>2025-07-29</td>
+              <td>2025-08-01</td>
+              <td><strong>3d</strong></td>
+              <td>$177.42</td>
+              <td>$171.71</td>
+              <td>57</td>
+              <td style="color:#ef4444;font-weight:700">-3.22%</td>
+              <td style="color:#ef4444;font-weight:600">$-325.47</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MRVL</td>
+              <td>2025-07-30</td>
+              <td>2025-08-01</td>
+              <td><strong>2d</strong></td>
+              <td>$81.78</td>
+              <td>$74.46</td>
+              <td>61</td>
+              <td style="color:#ef4444;font-weight:700">-8.95%</td>
+              <td style="color:#ef4444;font-weight:600">$-446.52</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">NVDA</td>
+              <td>2025-07-31</td>
+              <td>2025-08-01</td>
+              <td><strong>1d</strong></td>
+              <td>$178.06</td>
+              <td>$173.75</td>
+              <td>50</td>
+              <td style="color:#ef4444;font-weight:700">-2.42%</td>
+              <td style="color:#ef4444;font-weight:600">$-215.25</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">AMD</td>
+              <td>2025-08-01</td>
+              <td>2025-08-06</td>
+              <td><strong>5d</strong></td>
+              <td>$171.71</td>
+              <td>$163.08</td>
+              <td>59</td>
+              <td style="color:#ef4444;font-weight:700">-5.03%</td>
+              <td style="color:#ef4444;font-weight:600">$-509.17</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">PLTR</td>
+              <td>2025-08-05</td>
+              <td>2025-08-08</td>
+              <td><strong>3d</strong></td>
+              <td>$173.19</td>
+              <td>$185.80</td>
+              <td>58</td>
+              <td style="color:#22c55e;font-weight:700">+7.28%</td>
+              <td style="color:#22c55e;font-weight:600">$731.09</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">AMD</td>
+              <td>2025-08-06</td>
+              <td>2025-08-12</td>
+              <td><strong>6d</strong></td>
+              <td>$163.08</td>
+              <td>$174.93</td>
+              <td>62</td>
+              <td style="color:#22c55e;font-weight:700">+7.27%</td>
+              <td style="color:#22c55e;font-weight:600">$734.70</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">AMD</td>
+              <td>2025-08-13</td>
+              <td>2025-08-15</td>
+              <td><strong>2d</strong></td>
+              <td>$184.41</td>
+              <td>$177.51</td>
+              <td>55</td>
+              <td style="color:#ef4444;font-weight:700">-3.74%</td>
+              <td style="color:#ef4444;font-weight:600">$-379.50</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">PLTR</td>
+              <td>2025-08-19</td>
+              <td>2025-08-22</td>
+              <td><strong>3d</strong></td>
+              <td>$157.78</td>
+              <td>$158.75</td>
+              <td>25</td>
+              <td style="color:#22c55e;font-weight:700">+0.61%</td>
+              <td style="color:#22c55e;font-weight:600">$24.25</td>
+              <td><span class="badge blue">→ Sell</span></td>
+            </tr>
+            <tr>
+              <td class="sym">QCOM</td>
+              <td>2025-09-02</td>
+              <td>2025-09-22</td>
+              <td><strong>20d</strong></td>
+              <td>$158.76</td>
+              <td>$169.66</td>
+              <td>32</td>
+              <td style="color:#22c55e;font-weight:700">+6.87%</td>
+              <td style="color:#22c55e;font-weight:600">$348.80</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MU</td>
+              <td>2025-09-05</td>
+              <td>2025-09-10</td>
+              <td><strong>5d</strong></td>
+              <td>$131.37</td>
+              <td>$139.99</td>
+              <td>77</td>
+              <td style="color:#22c55e;font-weight:700">+6.56%</td>
+              <td style="color:#22c55e;font-weight:600">$663.74</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">ARM</td>
+              <td>2025-09-10</td>
+              <td>2025-09-12</td>
+              <td><strong>2d</strong></td>
+              <td>$154.02</td>
+              <td>$150.55</td>
+              <td>36</td>
+              <td style="color:#ef4444;font-weight:700">-2.25%</td>
+              <td style="color:#ef4444;font-weight:600">$-124.92</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MU</td>
+              <td>2025-09-11</td>
+              <td>2025-09-17</td>
+              <td><strong>6d</strong></td>
+              <td>$150.57</td>
+              <td>$159.93</td>
+              <td>68</td>
+              <td style="color:#22c55e;font-weight:700">+6.22%</td>
+              <td style="color:#22c55e;font-weight:600">$636.48</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">ARM</td>
+              <td>2025-09-18</td>
+              <td>2025-09-19</td>
+              <td><strong>1d</strong></td>
+              <td>$146.50</td>
+              <td>$142.87</td>
+              <td>55</td>
+              <td style="color:#ef4444;font-weight:700">-2.48%</td>
+              <td style="color:#ef4444;font-weight:600">$-199.92</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MRVL</td>
+              <td>2025-09-24</td>
+              <td>2025-10-02</td>
+              <td><strong>8d</strong></td>
+              <td>$80.06</td>
+              <td>$86.20</td>
+              <td>67</td>
+              <td style="color:#22c55e;font-weight:700">+7.68%</td>
+              <td style="color:#22c55e;font-weight:600">$411.71</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MU</td>
+              <td>2025-09-24</td>
+              <td>2025-09-25</td>
+              <td><strong>1d</strong></td>
+              <td>$161.68</td>
+              <td>$156.80</td>
+              <td>64</td>
+              <td style="color:#ef4444;font-weight:700">-3.02%</td>
+              <td style="color:#ef4444;font-weight:600">$-312.32</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">ARM</td>
+              <td>2025-10-01</td>
+              <td>2025-10-08</td>
+              <td><strong>7d</strong></td>
+              <td>$150.36</td>
+              <td>$166.70</td>
+              <td>66</td>
+              <td style="color:#22c55e;font-weight:700">+10.87%</td>
+              <td style="color:#22c55e;font-weight:600">$1,078.44</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">DELL</td>
+              <td>2025-10-01</td>
+              <td>2025-10-03</td>
+              <td><strong>2d</strong></td>
+              <td>$149.66</td>
+              <td>$140.72</td>
+              <td>69</td>
+              <td style="color:#ef4444;font-weight:700">-5.97%</td>
+              <td style="color:#ef4444;font-weight:600">$-616.86</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">PLTR</td>
+              <td>2025-10-03</td>
+              <td>2025-10-08</td>
+              <td><strong>5d</strong></td>
+              <td>$173.06</td>
+              <td>$183.52</td>
+              <td>51</td>
+              <td style="color:#22c55e;font-weight:700">+6.04%</td>
+              <td style="color:#22c55e;font-weight:600">$533.46</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">DELL</td>
+              <td>2025-10-06</td>
+              <td>2025-10-08</td>
+              <td><strong>2d</strong></td>
+              <td>$145.78</td>
+              <td>$164.53</td>
+              <td>71</td>
+              <td style="color:#22c55e;font-weight:700">+12.87%</td>
+              <td style="color:#22c55e;font-weight:600">$1,331.60</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">AMD</td>
+              <td>2025-10-06</td>
+              <td>2025-10-08</td>
+              <td><strong>2d</strong></td>
+              <td>$203.69</td>
+              <td>$235.47</td>
+              <td>50</td>
+              <td style="color:#22c55e;font-weight:700">+15.60%</td>
+              <td style="color:#22c55e;font-weight:600">$1,588.75</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">DELL</td>
+              <td>2025-10-08</td>
+              <td>2025-10-09</td>
+              <td><strong>1d</strong></td>
+              <td>$164.53</td>
+              <td>$155.92</td>
+              <td>65</td>
+              <td style="color:#ef4444;font-weight:700">-5.24%</td>
+              <td style="color:#ef4444;font-weight:600">$-559.98</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">ARM</td>
+              <td>2025-10-08</td>
+              <td>2025-10-10</td>
+              <td><strong>2d</strong></td>
+              <td>$166.70</td>
+              <td>$154.84</td>
+              <td>35</td>
+              <td style="color:#ef4444;font-weight:700">-7.11%</td>
+              <td style="color:#ef4444;font-weight:600">$-415.10</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">AMD</td>
+              <td>2025-10-08</td>
+              <td>2025-10-10</td>
+              <td><strong>2d</strong></td>
+              <td>$235.47</td>
+              <td>$214.75</td>
+              <td>45</td>
+              <td style="color:#ef4444;font-weight:700">-8.80%</td>
+              <td style="color:#ef4444;font-weight:600">$-932.40</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">DELL</td>
+              <td>2025-10-09</td>
+              <td>2025-10-10</td>
+              <td><strong>1d</strong></td>
+              <td>$155.92</td>
+              <td>$150.54</td>
+              <td>68</td>
+              <td style="color:#ef4444;font-weight:700">-3.45%</td>
+              <td style="color:#ef4444;font-weight:600">$-365.50</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MRVL</td>
+              <td>2025-10-10</td>
+              <td>2025-10-22</td>
+              <td><strong>12d</strong></td>
+              <td>$85.37</td>
+              <td>$81.10</td>
+              <td>123</td>
+              <td style="color:#ef4444;font-weight:700">-5.00%</td>
+              <td style="color:#ef4444;font-weight:600">$-525.21</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">AMD</td>
+              <td>2025-10-10</td>
+              <td>2025-10-15</td>
+              <td><strong>5d</strong></td>
+              <td>$214.75</td>
+              <td>$238.62</td>
+              <td>49</td>
+              <td style="color:#22c55e;font-weight:700">+11.12%</td>
+              <td style="color:#22c55e;font-weight:600">$1,169.63</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">DELL</td>
+              <td>2025-10-10</td>
+              <td>2025-10-27</td>
+              <td><strong>17d</strong></td>
+              <td>$150.54</td>
+              <td>$162.24</td>
+              <td>70</td>
+              <td style="color:#22c55e;font-weight:700">+7.77%</td>
+              <td style="color:#22c55e;font-weight:600">$818.65</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">ARM</td>
+              <td>2025-10-13</td>
+              <td>2025-10-14</td>
+              <td><strong>1d</strong></td>
+              <td>$171.94</td>
+              <td>$168.10</td>
+              <td>48</td>
+              <td style="color:#ef4444;font-weight:700">-2.23%</td>
+              <td style="color:#ef4444;font-weight:600">$-184.32</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">ARM</td>
+              <td>2025-10-14</td>
+              <td>2025-10-27</td>
+              <td><strong>13d</strong></td>
+              <td>$168.10</td>
+              <td>$178.63</td>
+              <td>38</td>
+              <td style="color:#22c55e;font-weight:700">+6.26%</td>
+              <td style="color:#22c55e;font-weight:600">$400.14</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">NVDA</td>
+              <td>2025-10-15</td>
+              <td>2025-10-20</td>
+              <td><strong>5d</strong></td>
+              <td>$179.87</td>
+              <td>$182.55</td>
+              <td>22</td>
+              <td style="color:#22c55e;font-weight:700">+1.49%</td>
+              <td style="color:#22c55e;font-weight:600">$58.96</td>
+              <td><span class="badge blue">→ Sell</span></td>
+            </tr>
+            <tr>
+              <td class="sym">QCOM</td>
+              <td>2025-10-27</td>
+              <td>2025-10-28</td>
+              <td><strong>1d</strong></td>
+              <td>$187.65</td>
+              <td>$181.03</td>
+              <td>51</td>
+              <td style="color:#ef4444;font-weight:700">-3.53%</td>
+              <td style="color:#ef4444;font-weight:600">$-337.62</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">NVDA</td>
+              <td>2025-10-28</td>
+              <td>2025-11-05</td>
+              <td><strong>8d</strong></td>
+              <td>$201.05</td>
+              <td>$195.18</td>
+              <td>27</td>
+              <td style="color:#ef4444;font-weight:700">-2.92%</td>
+              <td style="color:#ef4444;font-weight:600">$-158.62</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MRVL</td>
+              <td>2025-10-31</td>
+              <td>2025-11-03</td>
+              <td><strong>3d</strong></td>
+              <td>$93.71</td>
+              <td>$90.36</td>
+              <td>66</td>
+              <td style="color:#ef4444;font-weight:700">-3.57%</td>
+              <td style="color:#ef4444;font-weight:600">$-221.10</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">PLTR</td>
+              <td>2025-11-03</td>
+              <td>2025-11-04</td>
+              <td><strong>1d</strong></td>
+              <td>$207.39</td>
+              <td>$190.53</td>
+              <td>51</td>
+              <td style="color:#ef4444;font-weight:700">-8.13%</td>
+              <td style="color:#ef4444;font-weight:600">$-859.86</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">QCOM</td>
+              <td>2025-11-05</td>
+              <td>2025-11-06</td>
+              <td><strong>1d</strong></td>
+              <td>$179.17</td>
+              <td>$173.21</td>
+              <td>26</td>
+              <td style="color:#ef4444;font-weight:700">-3.33%</td>
+              <td style="color:#ef4444;font-weight:600">$-154.96</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MU</td>
+              <td>2025-11-05</td>
+              <td>2025-11-10</td>
+              <td><strong>5d</strong></td>
+              <td>$237.41</td>
+              <td>$253.22</td>
+              <td>44</td>
+              <td style="color:#22c55e;font-weight:700">+6.66%</td>
+              <td style="color:#22c55e;font-weight:600">$695.64</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MRVL</td>
+              <td>2025-11-07</td>
+              <td>2025-11-13</td>
+              <td><strong>6d</strong></td>
+              <td>$90.94</td>
+              <td>$87.54</td>
+              <td>49</td>
+              <td style="color:#ef4444;font-weight:700">-3.73%</td>
+              <td style="color:#ef4444;font-weight:600">$-166.35</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">PLTR</td>
+              <td>2025-11-10</td>
+              <td>2025-11-12</td>
+              <td><strong>2d</strong></td>
+              <td>$193.63</td>
+              <td>$184.19</td>
+              <td>34</td>
+              <td style="color:#ef4444;font-weight:700">-4.88%</td>
+              <td style="color:#ef4444;font-weight:600">$-320.96</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">AMD</td>
+              <td>2025-11-12</td>
+              <td>2025-11-13</td>
+              <td><strong>1d</strong></td>
+              <td>$258.90</td>
+              <td>$247.99</td>
+              <td>23</td>
+              <td style="color:#ef4444;font-weight:700">-4.21%</td>
+              <td style="color:#ef4444;font-weight:600">$-250.93</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MU</td>
+              <td>2025-11-14</td>
+              <td>2025-11-17</td>
+              <td><strong>3d</strong></td>
+              <td>$246.86</td>
+              <td>$241.88</td>
+              <td>42</td>
+              <td style="color:#ef4444;font-weight:700">-2.02%</td>
+              <td style="color:#ef4444;font-weight:600">$-209.16</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MU</td>
+              <td>2025-11-17</td>
+              <td>2025-11-18</td>
+              <td><strong>1d</strong></td>
+              <td>$241.88</td>
+              <td>$228.46</td>
+              <td>43</td>
+              <td style="color:#ef4444;font-weight:700">-5.55%</td>
+              <td style="color:#ef4444;font-weight:600">$-577.27</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MU</td>
+              <td>2025-11-18</td>
+              <td>2025-11-20</td>
+              <td><strong>2d</strong></td>
+              <td>$228.46</td>
+              <td>$201.38</td>
+              <td>39</td>
+              <td style="color:#ef4444;font-weight:700">-11.85%</td>
+              <td style="color:#ef4444;font-weight:600">$-1,056.12</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MRVL</td>
+              <td>2025-12-03</td>
+              <td>2025-12-04</td>
+              <td><strong>1d</strong></td>
+              <td>$100.22</td>
+              <td>$98.20</td>
+              <td>99</td>
+              <td style="color:#ef4444;font-weight:700">-2.02%</td>
+              <td style="color:#ef4444;font-weight:600">$-199.98</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MU</td>
+              <td>2025-12-18</td>
+              <td>2025-12-19</td>
+              <td><strong>1d</strong></td>
+              <td>$248.52</td>
+              <td>$265.86</td>
+              <td>27</td>
+              <td style="color:#22c55e;font-weight:700">+6.98%</td>
+              <td style="color:#22c55e;font-weight:600">$468.18</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MU</td>
+              <td>2026-01-06</td>
+              <td>2026-01-08</td>
+              <td><strong>2d</strong></td>
+              <td>$343.51</td>
+              <td>$327.06</td>
+              <td>30</td>
+              <td style="color:#ef4444;font-weight:700">-4.79%</td>
+              <td style="color:#ef4444;font-weight:600">$-493.50</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MU</td>
+              <td>2026-01-20</td>
+              <td>2026-01-21</td>
+              <td><strong>1d</strong></td>
+              <td>$365.57</td>
+              <td>$388.99</td>
+              <td>28</td>
+              <td style="color:#22c55e;font-weight:700">+6.40%</td>
+              <td style="color:#22c55e;font-weight:600">$655.48</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">AMD</td>
+              <td>2026-01-21</td>
+              <td>2026-01-30</td>
+              <td><strong>9d</strong></td>
+              <td>$249.68</td>
+              <td>$236.80</td>
+              <td>41</td>
+              <td style="color:#ef4444;font-weight:700">-5.16%</td>
+              <td style="color:#ef4444;font-weight:600">$-528.08</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MU</td>
+              <td>2026-02-04</td>
+              <td>2026-02-11</td>
+              <td><strong>7d</strong></td>
+              <td>$379.53</td>
+              <td>$410.06</td>
+              <td>19</td>
+              <td style="color:#22c55e;font-weight:700">+8.04%</td>
+              <td style="color:#22c55e;font-weight:600">$580.07</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">ARM</td>
+              <td>2026-02-06</td>
+              <td>2026-02-25</td>
+              <td><strong>19d</strong></td>
+              <td>$123.73</td>
+              <td>$131.74</td>
+              <td>51</td>
+              <td style="color:#22c55e;font-weight:700">+6.47%</td>
+              <td style="color:#22c55e;font-weight:600">$408.51</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">DELL</td>
+              <td>2026-02-27</td>
+              <td>2026-03-10</td>
+              <td><strong>10d</strong></td>
+              <td>$148.02</td>
+              <td>$143.86</td>
+              <td>70</td>
+              <td style="color:#ef4444;font-weight:700">-2.81%</td>
+              <td style="color:#ef4444;font-weight:600">$-291.20</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MRVL</td>
+              <td>2026-03-06</td>
+              <td>2026-03-12</td>
+              <td><strong>5d</strong></td>
+              <td>$89.52</td>
+              <td>$87.69</td>
+              <td>116</td>
+              <td style="color:#ef4444;font-weight:700">-2.04%</td>
+              <td style="color:#ef4444;font-weight:600">$-212.28</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MU</td>
+              <td>2026-03-16</td>
+              <td>2026-03-20</td>
+              <td><strong>4d</strong></td>
+              <td>$441.87</td>
+              <td>$422.87</td>
+              <td>11</td>
+              <td style="color:#ef4444;font-weight:700">-4.30%</td>
+              <td style="color:#ef4444;font-weight:600">$-209.00</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">DELL</td>
+              <td>2026-03-20</td>
+              <td>2026-03-24</td>
+              <td><strong>4d</strong></td>
+              <td>$158.08</td>
+              <td>$176.97</td>
+              <td>65</td>
+              <td style="color:#22c55e;font-weight:700">+11.95%</td>
+              <td style="color:#22c55e;font-weight:600">$1,228.17</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">ARM</td>
+              <td>2026-03-20</td>
+              <td>2026-03-25</td>
+              <td><strong>5d</strong></td>
+              <td>$132.45</td>
+              <td>$157.06</td>
+              <td>28</td>
+              <td style="color:#22c55e;font-weight:700">+18.58%</td>
+              <td style="color:#22c55e;font-weight:600">$689.22</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">PLTR</td>
+              <td>2026-03-23</td>
+              <td>2026-03-24</td>
+              <td><strong>1d</strong></td>
+              <td>$160.82</td>
+              <td>$154.79</td>
+              <td>64</td>
+              <td style="color:#ef4444;font-weight:700">-3.75%</td>
+              <td style="color:#ef4444;font-weight:600">$-385.92</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">ARM</td>
+              <td>2026-03-26</td>
+              <td>2026-03-27</td>
+              <td><strong>1d</strong></td>
+              <td>$154.63</td>
+              <td>$144.11</td>
+              <td>68</td>
+              <td style="color:#ef4444;font-weight:700">-6.81%</td>
+              <td style="color:#ef4444;font-weight:600">$-715.70</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">ARM</td>
+              <td>2026-03-27</td>
+              <td>2026-03-30</td>
+              <td><strong>3d</strong></td>
+              <td>$144.11</td>
+              <td>$136.97</td>
+              <td>63</td>
+              <td style="color:#ef4444;font-weight:700">-4.95%</td>
+              <td style="color:#ef4444;font-weight:600">$-449.82</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">DELL</td>
+              <td>2026-03-31</td>
+              <td>2026-04-02</td>
+              <td><strong>2d</strong></td>
+              <td>$164.19</td>
+              <td>$174.31</td>
+              <td>55</td>
+              <td style="color:#22c55e;font-weight:700">+6.16%</td>
+              <td style="color:#22c55e;font-weight:600">$556.60</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MRVL</td>
+              <td>2026-03-31</td>
+              <td>2026-04-01</td>
+              <td><strong>1d</strong></td>
+              <td>$99.01</td>
+              <td>$106.71</td>
+              <td>105</td>
+              <td style="color:#22c55e;font-weight:700">+7.78%</td>
+              <td style="color:#22c55e;font-weight:600">$808.50</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MRVL</td>
+              <td>2026-04-08</td>
+              <td>2026-04-10</td>
+              <td><strong>2d</strong></td>
+              <td>$114.45</td>
+              <td>$128.44</td>
+              <td>92</td>
+              <td style="color:#22c55e;font-weight:700">+12.22%</td>
+              <td style="color:#22c55e;font-weight:600">$1,287.08</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MRVL</td>
+              <td>2026-04-10</td>
+              <td>2026-04-17</td>
+              <td><strong>7d</strong></td>
+              <td>$128.44</td>
+              <td>$139.71</td>
+              <td>83</td>
+              <td style="color:#22c55e;font-weight:700">+8.77%</td>
+              <td style="color:#22c55e;font-weight:600">$935.41</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">ARM</td>
+              <td>2026-04-23</td>
+              <td>2026-04-24</td>
+              <td><strong>1d</strong></td>
+              <td>$204.72</td>
+              <td>$234.83</td>
+              <td>52</td>
+              <td style="color:#22c55e;font-weight:700">+14.71%</td>
+              <td style="color:#22c55e;font-weight:600">$1,565.72</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">NVDA</td>
+              <td>2026-04-24</td>
+              <td>2026-04-30</td>
+              <td><strong>6d</strong></td>
+              <td>$208.18</td>
+              <td>$199.54</td>
+              <td>52</td>
+              <td style="color:#ef4444;font-weight:700">-4.15%</td>
+              <td style="color:#ef4444;font-weight:600">$-449.28</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">AMD</td>
+              <td>2026-04-24</td>
+              <td>2026-04-27</td>
+              <td><strong>3d</strong></td>
+              <td>$347.78</td>
+              <td>$334.42</td>
+              <td>31</td>
+              <td style="color:#ef4444;font-weight:700">-3.84%</td>
+              <td style="color:#ef4444;font-weight:600">$-414.16</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">QCOM</td>
+              <td>2026-04-24</td>
+              <td>2026-04-30</td>
+              <td><strong>6d</strong></td>
+              <td>$148.93</td>
+              <td>$179.64</td>
+              <td>68</td>
+              <td style="color:#22c55e;font-weight:700">+20.62%</td>
+              <td style="color:#22c55e;font-weight:600">$2,088.62</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">ARM</td>
+              <td>2026-04-27</td>
+              <td>2026-04-28</td>
+              <td><strong>1d</strong></td>
+              <td>$215.90</td>
+              <td>$198.58</td>
+              <td>50</td>
+              <td style="color:#ef4444;font-weight:700">-8.02%</td>
+              <td style="color:#ef4444;font-weight:600">$-866.00</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">ARM</td>
+              <td>2026-04-28</td>
+              <td>2026-05-01</td>
+              <td><strong>3d</strong></td>
+              <td>$198.58</td>
+              <td>$211.12</td>
+              <td>54</td>
+              <td style="color:#22c55e;font-weight:700">+6.31%</td>
+              <td style="color:#22c55e;font-weight:600">$677.16</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">QCOM</td>
+              <td>2026-04-30</td>
+              <td>2026-05-04</td>
+              <td><strong>4d</strong></td>
+              <td>$179.64</td>
+              <td>$168.34</td>
+              <td>61</td>
+              <td style="color:#ef4444;font-weight:700">-6.29%</td>
+              <td style="color:#ef4444;font-weight:600">$-689.30</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">NVDA</td>
+              <td>2026-04-30</td>
+              <td>2026-05-07</td>
+              <td><strong>7d</strong></td>
+              <td>$199.54</td>
+              <td>$211.56</td>
+              <td>49</td>
+              <td style="color:#22c55e;font-weight:700">+6.02%</td>
+              <td style="color:#22c55e;font-weight:600">$588.98</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">AMD</td>
+              <td>2026-05-04</td>
+              <td>2026-05-06</td>
+              <td><strong>2d</strong></td>
+              <td>$341.52</td>
+              <td>$421.55</td>
+              <td>32</td>
+              <td style="color:#22c55e;font-weight:700">+23.43%</td>
+              <td style="color:#22c55e;font-weight:600">$2,560.96</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">QCOM</td>
+              <td>2026-05-04</td>
+              <td>2026-05-05</td>
+              <td><strong>1d</strong></td>
+              <td>$168.34</td>
+              <td>$186.49</td>
+              <td>65</td>
+              <td style="color:#22c55e;font-weight:700">+10.78%</td>
+              <td style="color:#22c55e;font-weight:600">$1,179.75</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MU</td>
+              <td>2026-05-05</td>
+              <td>2026-05-08</td>
+              <td><strong>3d</strong></td>
+              <td>$640.34</td>
+              <td>$747.10</td>
+              <td>17</td>
+              <td style="color:#22c55e;font-weight:700">+16.67%</td>
+              <td style="color:#22c55e;font-weight:600">$1,814.92</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">ARM</td>
+              <td>2026-05-06</td>
+              <td>2026-05-07</td>
+              <td><strong>1d</strong></td>
+              <td>$237.34</td>
+              <td>$213.24</td>
+              <td>48</td>
+              <td style="color:#ef4444;font-weight:700">-10.15%</td>
+              <td style="color:#ef4444;font-weight:600">$-1,156.80</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">QCOM</td>
+              <td>2026-05-06</td>
+              <td>2026-05-08</td>
+              <td><strong>2d</strong></td>
+              <td>$192.66</td>
+              <td>$219.19</td>
+              <td>59</td>
+              <td style="color:#22c55e;font-weight:700">+13.77%</td>
+              <td style="color:#22c55e;font-weight:600">$1,565.56</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">AMD</td>
+              <td>2026-05-06</td>
+              <td>2026-05-07</td>
+              <td><strong>1d</strong></td>
+              <td>$421.55</td>
+              <td>$408.19</td>
+              <td>27</td>
+              <td style="color:#ef4444;font-weight:700">-3.17%</td>
+              <td style="color:#ef4444;font-weight:600">$-360.59</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">DELL</td>
+              <td>2026-05-06</td>
+              <td>2026-05-07</td>
+              <td><strong>1d</strong></td>
+              <td>$238.79</td>
+              <td>$230.13</td>
+              <td>47</td>
+              <td style="color:#ef4444;font-weight:700">-3.63%</td>
+              <td style="color:#ef4444;font-weight:600">$-407.02</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">ARM</td>
+              <td>2026-05-07</td>
+              <td>2026-05-12</td>
+              <td><strong>5d</strong></td>
+              <td>$213.24</td>
+              <td>$207.84</td>
+              <td>52</td>
+              <td style="color:#ef4444;font-weight:700">-2.53%</td>
+              <td style="color:#ef4444;font-weight:600">$-280.80</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MU</td>
+              <td>2026-05-08</td>
+              <td>2026-05-11</td>
+              <td><strong>3d</strong></td>
+              <td>$747.10</td>
+              <td>$795.33</td>
+              <td>15</td>
+              <td style="color:#22c55e;font-weight:700">+6.46%</td>
+              <td style="color:#22c55e;font-weight:600">$723.45</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">QCOM</td>
+              <td>2026-05-08</td>
+              <td>2026-05-11</td>
+              <td><strong>3d</strong></td>
+              <td>$219.19</td>
+              <td>$237.56</td>
+              <td>52</td>
+              <td style="color:#22c55e;font-weight:700">+8.38%</td>
+              <td style="color:#22c55e;font-weight:600">$954.98</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">DELL</td>
+              <td>2026-05-11</td>
+              <td>2026-05-12</td>
+              <td><strong>1d</strong></td>
+              <td>$246.96</td>
+              <td>$239.01</td>
+              <td>47</td>
+              <td style="color:#ef4444;font-weight:700">-3.22%</td>
+              <td style="color:#ef4444;font-weight:600">$-373.42</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MU</td>
+              <td>2026-05-12</td>
+              <td>2026-05-15</td>
+              <td><strong>3d</strong></td>
+              <td>$765.80</td>
+              <td>$724.09</td>
+              <td>15</td>
+              <td style="color:#ef4444;font-weight:700">-5.45%</td>
+              <td style="color:#ef4444;font-weight:600">$-625.65</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">QCOM</td>
+              <td>2026-05-12</td>
+              <td>2026-05-14</td>
+              <td><strong>2d</strong></td>
+              <td>$210.36</td>
+              <td>$199.99</td>
+              <td>55</td>
+              <td style="color:#ef4444;font-weight:700">-4.93%</td>
+              <td style="color:#ef4444;font-weight:600">$-570.35</td>
+              <td><span class="badge red">✗ Stop</span></td>
+            </tr>
+            <tr>
+              <td class="sym">DELL</td>
+              <td>2026-05-26</td>
+              <td>2026-05-29</td>
+              <td><strong>3d</strong></td>
+              <td>$304.96</td>
+              <td>$421.61</td>
+              <td>37</td>
+              <td style="color:#22c55e;font-weight:700">+38.25%</td>
+              <td style="color:#22c55e;font-weight:600">$4,316.05</td>
+              <td><span class="badge green">✓ Target</span></td>
+            </tr>
+            <tr>
+              <td class="sym">MRVL</td>
+              <td>2026-05-27</td>
+              <td>2026-05-29</td>
+              <td><strong>2d</strong></td>
+              <td>$198.69</td>
+              <td>$205.11</td>
+              <td>57</td>
+              <td style="color:#22c55e;font-weight:700">+3.23%</td>
+              <td style="color:#22c55e;font-weight:600">$365.94</td>
+              <td><span class="badge gray">⏹ EOB</span></td>
+            </tr>
+            <tr>
+              <td class="sym">DELL</td>
+              <td>2026-05-29</td>
+              <td>2026-05-29</td>
+              <td><strong>0d</strong></td>
+              <td>$421.61</td>
+              <td>$421.61</td>
+              <td>28</td>
+              <td style="color:#22c55e;font-weight:700">+0.00%</td>
+              <td style="color:#22c55e;font-weight:600">$0.00</td>
+              <td><span class="badge gray">⏹ EOB</span></td>
+            </tr>
+            <tr>
+              <td class="sym">PLTR</td>
+              <td>2026-05-29</td>
+              <td>2026-05-29</td>
+              <td><strong>0d</strong></td>
+              <td>$156.58</td>
+              <td>$156.58</td>
+              <td>64</td>
+              <td style="color:#22c55e;font-weight:700">+0.00%</td>
+              <td style="color:#22c55e;font-weight:600">$0.00</td>
+              <td><span class="badge gray">⏹ EOB</span></td>
+            </tr>
+            <tr>
+              <td class="sym">NOW</td>
+              <td>2026-05-29</td>
+              <td>2026-05-29</td>
+              <td><strong>0d</strong></td>
+              <td>$124.48</td>
+              <td>$124.48</td>
+              <td>96</td>
+              <td style="color:#22c55e;font-weight:700">+0.00%</td>
+              <td style="color:#22c55e;font-weight:600">$0.00</td>
+              <td><span class="badge gray">⏹ EOB</span></td>
+            </tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    Report: backtest_momentum_20260531_145028.html &nbsp;·&nbsp;
+    CSV: backtest_momentum_20260531_145028_trades.csv
+  </footer>
+</div>
+
+<script>
+const labels = ["2025-02-10", "2025-02-11", "2025-02-12", "2025-02-13", "2025-02-14", "2025-02-18", "2025-02-19", "2025-02-20", "2025-02-21", "2025-02-24", "2025-02-25", "2025-02-26", "2025-02-27", "2025-02-28", "2025-03-03", "2025-03-04", "2025-03-05", "2025-03-06", "2025-03-07", "2025-03-10", "2025-03-11", "2025-03-12", "2025-03-13", "2025-03-14", "2025-03-17", "2025-03-18", "2025-03-19", "2025-03-20", "2025-03-21", "2025-03-24", "2025-03-25", "2025-03-26", "2025-03-27", "2025-03-28", "2025-03-31", "2025-04-01", "2025-04-02", "2025-04-03", "2025-04-04", "2025-04-07", "2025-04-08", "2025-04-09", "2025-04-10", "2025-04-11", "2025-04-14", "2025-04-15", "2025-04-16", "2025-04-17", "2025-04-21", "2025-04-22", "2025-04-23", "2025-04-24", "2025-04-25", "2025-04-28", "2025-04-29", "2025-04-30", "2025-05-01", "2025-05-02", "2025-05-05", "2025-05-06", "2025-05-07", "2025-05-08", "2025-05-09", "2025-05-12", "2025-05-13", "2025-05-14", "2025-05-15", "2025-05-16", "2025-05-19", "2025-05-20", "2025-05-21", "2025-05-22", "2025-05-23", "2025-05-27", "2025-05-28", "2025-05-29", "2025-05-30", "2025-06-02", "2025-06-03", "2025-06-04", "2025-06-05", "2025-06-06", "2025-06-09", "2025-06-10", "2025-06-11", "2025-06-12", "2025-06-13", "2025-06-16", "2025-06-17", "2025-06-18", "2025-06-20", "2025-06-23", "2025-06-24", "2025-06-25", "2025-06-26", "2025-06-27", "2025-06-30", "2025-07-01", "2025-07-02", "2025-07-03", "2025-07-07", "2025-07-08", "2025-07-09", "2025-07-10", "2025-07-11", "2025-07-14", "2025-07-15", "2025-07-16", "2025-07-17", "2025-07-18", "2025-07-21", "2025-07-22", "2025-07-23", "2025-07-24", "2025-07-25", "2025-07-28", "2025-07-29", "2025-07-30", "2025-07-31", "2025-08-01", "2025-08-04", "2025-08-05", "2025-08-06", "2025-08-07", "2025-08-08", "2025-08-11", "2025-08-12", "2025-08-13", "2025-08-14", "2025-08-15", "2025-08-18", "2025-08-19", "2025-08-20", "2025-08-21", "2025-08-22", "2025-08-25", "2025-08-26", "2025-08-27", "2025-08-28", "2025-08-29", "2025-09-02", "2025-09-03", "2025-09-04", "2025-09-05", "2025-09-08", "2025-09-09", "2025-09-10", "2025-09-11", "2025-09-12", "2025-09-15", "2025-09-16", "2025-09-17", "2025-09-18", "2025-09-19", "2025-09-22", "2025-09-23", "2025-09-24", "2025-09-25", "2025-09-26", "2025-09-29", "2025-09-30", "2025-10-01", "2025-10-02", "2025-10-03", "2025-10-06", "2025-10-07", "2025-10-08", "2025-10-09", "2025-10-10", "2025-10-13", "2025-10-14", "2025-10-15", "2025-10-16", "2025-10-17", "2025-10-20", "2025-10-21", "2025-10-22", "2025-10-23", "2025-10-24", "2025-10-27", "2025-10-28", "2025-10-29", "2025-10-30", "2025-10-31", "2025-11-03", "2025-11-04", "2025-11-05", "2025-11-06", "2025-11-07", "2025-11-10", "2025-11-11", "2025-11-12", "2025-11-13", "2025-11-14", "2025-11-17", "2025-11-18", "2025-11-19", "2025-11-20", "2025-11-21", "2025-11-24", "2025-11-25", "2025-11-26", "2025-11-28", "2025-12-01", "2025-12-02", "2025-12-03", "2025-12-04", "2025-12-05", "2025-12-08", "2025-12-09", "2025-12-10", "2025-12-11", "2025-12-12", "2025-12-15", "2025-12-16", "2025-12-17", "2025-12-18", "2025-12-19", "2025-12-22", "2025-12-23", "2025-12-24", "2025-12-26", "2025-12-29", "2025-12-30", "2025-12-31", "2026-01-02", "2026-01-05", "2026-01-06", "2026-01-07", "2026-01-08", "2026-01-09", "2026-01-12", "2026-01-13", "2026-01-14", "2026-01-15", "2026-01-16", "2026-01-20", "2026-01-21", "2026-01-22", "2026-01-23", "2026-01-26", "2026-01-27", "2026-01-28", "2026-01-29", "2026-01-30", "2026-02-02", "2026-02-03", "2026-02-04", "2026-02-05", "2026-02-06", "2026-02-09", "2026-02-10", "2026-02-11", "2026-02-12", "2026-02-13", "2026-02-17", "2026-02-18", "2026-02-19", "2026-02-20", "2026-02-23", "2026-02-24", "2026-02-25", "2026-02-26", "2026-02-27", "2026-03-02", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19", "2026-03-20", "2026-03-23", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-06", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-13", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-01", "2026-05-04", "2026-05-05", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29"];
+const values = [100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100147.88, 101070.42, 101138.73, 102154.91, 103092.97, 103776.14, 103437.05, 103694.62, 103474.4, 103366.11, 103228.71, 103103.12, 103071.27, 103453.93, 103303.32, 103650.76, 102539.21, 102805.83, 103424.43, 103359.22, 102269.18, 102807.78, 103389.42, 103616.94, 103328.91, 103205.29, 102894.81, 102894.81, 102894.81, 103451.59, 103535.98, 103612.83, 104129.03, 104129.03, 104148.47, 104531.74, 104220.12, 103245.88, 103451.44, 103735.61, 102820.36, 103336.1, 103294.69, 103361.91, 103418.16, 102921.3, 102892.16, 103044.18, 103292.93, 103231.39, 102943.01, 102244.95, 102523.66, 102517.08, 102704.14, 102704.14, 102704.14, 102823.27, 102553.6, 101716.9, 102015.44, 101875.61, 101576.9, 102304.34, 102539.6, 102512.94, 102673.52, 102673.52, 102484.59, 102294.02, 102294.02, 102294.02, 102250.02, 102253.39, 102318.27, 102318.27, 102318.27, 102318.27, 102318.27, 102318.27, 102318.27, 102270.91, 102348.67, 102352.83, 102374.58, 102612.16, 102988.57, 103094.13, 103405.57, 103426.45, 103585.89, 103699.33, 103792.77, 103551.88, 103642.44, 103642.44, 103642.44, 103581.37, 103537.15, 103490.25, 103600.13, 103584.72, 103707.49, 103271.5, 103844.26, 104923.77, 107657.23, 107123.58, 105384.26, 106161.5, 105340.15, 107127.35, 106926.98, 106593.57, 106418.37, 106258.54, 105784.21, 106107.13, 106571.69, 107122.11, 106784.49, 106946.08, 106834.44, 106823.37, 106724.04, 105637.38, 105544.9, 105433.07, 105411.51, 106198.53, 105917.33, 105687.94, 105347.34, 105347.34, 105138.18, 104560.91, 104461.46, 103504.79, 103504.79, 103504.79, 103504.79, 103504.79, 103504.79, 103504.79, 103504.79, 103504.79, 103304.81, 103304.81, 103304.81, 103304.81, 103304.81, 103304.81, 103304.81, 103304.81, 103304.81, 103304.81, 103304.81, 103772.99, 103772.99, 103772.99, 103772.99, 103772.99, 103772.99, 103772.99, 103772.99, 103772.99, 103772.99, 103772.99, 103630.19, 103279.49, 103279.49, 103279.49, 103279.49, 103279.49, 103279.49, 103279.49, 103279.49, 103934.97, 104100.2, 104343.74, 104000.57, 104028.04, 104055.92, 104037.06, 103406.89, 103406.89, 103406.89, 103406.89, 103471.49, 103693.12, 103524.44, 103400.16, 104069.58, 103909.95, 104067.03, 104145.82, 104164.44, 104150.16, 104081.31, 103989.51, 104210.85, 104395.47, 104395.47, 104395.47, 104780.47, 104197.37, 104330.37, 104288.37, 104285.57, 104659.02, 104542.75, 104209.25, 103891.99, 103891.99, 103891.99, 104111.22, 104110.83, 103918.94, 103682.99, 104239.65, 104595.8, 105214.46, 105214.46, 104498.76, 104048.94, 104048.94, 105144.54, 105414.04, 105414.04, 105414.04, 105414.04, 105915.44, 106701.12, 106936.84, 107148.49, 107207.42, 107103.67, 107636.53, 107636.53, 107636.53, 107636.53, 107636.53, 109202.25, 109316.99, 108252.27, 108643.75, 110195.93, 110023.03, 109501.27, 111016.56, 114138.79, 112646.73, 115331.94, 116985.41, 116359.28, 117076.58, 115940.5, 115163.28, 115163.28, 115163.28, 115163.28, 115163.28, 115163.28, 115163.28, 115175.86, 115968.97, 119845.27];
+const initial = 100000;
+
+const ctx = document.getElementById('eqChart').getContext('2d');
+const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+gradient.addColorStop(0, 'rgba(99,102,241,0.35)');
+gradient.addColorStop(1, 'rgba(99,102,241,0.00)');
+
+new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [{
+      label: 'Portfolio Value',
+      data: values,
+      borderColor: '#6366f1',
+      backgroundColor: gradient,
+      borderWidth: 2,
+      pointRadius: 0,
+      fill: true,
+      tension: 0.3,
+    }, {
+      label: 'Initial Capital',
+      data: labels.map(() => initial),
+      borderColor: 'rgba(148,163,184,0.3)',
+      borderWidth: 1,
+      borderDash: [4,4],
+      pointRadius: 0,
+      fill: false,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { labels: { color: '#94a3b8', font: { size: 12 } } },
+      tooltip: {
+        backgroundColor: '#1e293b',
+        borderColor: '#334155',
+        borderWidth: 1,
+        titleColor: '#e2e8f0',
+        bodyColor: '#94a3b8',
+        callbacks: {
+          label: ctx => ' $' + ctx.parsed.y.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})
+        }
+      }
+    },
+    scales: {
+      x: {
+        ticks: { color: '#64748b', maxTicksLimit: 10, font: { size: 11 } },
+        grid:  { color: 'rgba(51,65,85,0.4)' }
+      },
+      y: {
+        ticks: {
+          color: '#64748b', font: { size: 11 },
+          callback: v => '$' + v.toLocaleString()
+        },
+        grid: { color: 'rgba(51,65,85,0.4)' }
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>
