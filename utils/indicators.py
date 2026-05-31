@@ -133,3 +133,29 @@ def crossunder(fast: pd.Series, slow: pd.Series) -> pd.Series:
     prev_above = fast.shift(1) > slow.shift(1)
     now_below  = fast <= slow
     return prev_above & now_below
+
+
+def adx(high: pd.Series, low: pd.Series, close: pd.Series,
+        period: int = 14) -> pd.Series:
+    """
+    Average Directional Index — measures trend strength (not direction).
+    > 25 = strong trend, < 20 = weak/ranging market.
+    Used to filter RSI signals: avoid mean-reversion in strong trends.
+    """
+    up   = high.diff()
+    down = -low.diff()
+
+    plus_dm  = up.where((up > down) & (up > 0), 0.0)
+    minus_dm = down.where((down > up) & (down > 0), 0.0)
+
+    tr1 = high - low
+    tr2 = (high - close.shift()).abs()
+    tr3 = (low  - close.shift()).abs()
+    true_range = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+
+    atr_s    = true_range.ewm(alpha=1/period, adjust=False).mean()
+    plus_di  = 100 * plus_dm.ewm(alpha=1/period, adjust=False).mean() / atr_s
+    minus_di = 100 * minus_dm.ewm(alpha=1/period, adjust=False).mean() / atr_s
+
+    dx  = (100 * (plus_di - minus_di).abs() / (plus_di + minus_di)).fillna(0)
+    return dx.ewm(alpha=1/period, adjust=False).mean()
