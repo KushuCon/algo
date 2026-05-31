@@ -128,3 +128,24 @@ SCALP5_EOD_CUTOFF  = "15:30"
 # Tighter risk when running scalp1 / scalp5 (main.py applies these)
 SCALP_STOP_LOSS_PCT   = 0.005   # 0.5%
 SCALP_TAKE_PROFIT_PCT = 0.01    # 1.0%
+
+
+
+# RS Breakout Strategy
+RS_LOOKBACK = 10              # Days for RS vs SPY
+RS_THRESHOLD = 1.05           # Fixed: 5% outperformance (was 1.50)
+RS_USE_PERCENTILE = True      # Use top N% instead of fixed
+RS_TOP_PCT = 0.20             # Top 20% of stocks by RS
+RS_BREAKOUT_DAYS = 20         # 20-day high breakout
+RS_MACD_FAST = 12
+RS_MACD_SLOW = 26
+RS_MACD_SIGNAL = 9
+RS_VOL_MULT = 1.3             # Volume 1.3x average
+RS_ATR_PERIOD = 14
+RS_ATR_STOP_MULT = 2.0        # Stop at entry - 2x ATR
+RS_ATR_TARGET_MULT = 3.0      # Target at entry + 3x ATR
+RS_TRAIL_ATR_MULT = 1.5       # Trail at highest - 1.5x ATR
+RS_MAX_HOLD = 7               # Max 7 days
+RS_MIN_HOLD_EXIT = 3          # Min 3 days before MACD exit
+RS_SPY_TREND_DAYS = 50        # SPY 50-day SMA filter
+RS_BREADTH_FILTER = True      # Market breadth check

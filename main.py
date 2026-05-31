@@ -7,32 +7,53 @@ import config
 from broker import AlpacaBroker
 from portfolio import PortfolioManager
 from utils.logger import get_logger
-from strategies.INTRADAY.scalp_1m import ScalpOneMin
-from strategies.INTRADAY.scalp_5m import ScalpFiveMin
+# from strategies.INTRADAY.scalp_1m import ScalpOneMin
+# from strategies.INTRADAY.scalp_5m import ScalpFiveMin
 
-# ── Strategy registry ──────────────────────────────────────────────────────────
-from strategies.sma_crossover      import SMAcrossover
-from strategies.POSITIONAL_2_3_DAY.rsi_mean_revert    import RSIMeanRevert
-from strategies.POSITIONAL_4_5_DAY.momentum           import MomentumStrategy
-from strategies.POSITIONAL_2_3_DAY.ma_crossover_sl    import MACrossoverWithSL
-from strategies.pairs_trading      import PairsTradingStrategy
-from strategies.factor_model       import FactorModelStrategy
-from strategies.stat_arb           import StatArbStrategy
+# # ── Strategy registry ──────────────────────────────────────────────────────────
+# from strategies.sma_crossover      import SMAcrossover
+# from strategies.POSITIONAL_2_3_DAY.rsi_mean_revert    import RSIMeanRevert
+# from strategies.POSITIONAL_4_5_DAY.momentum           import MomentumStrategy
+# from strategies.POSITIONAL_2_3_DAY.ma_crossover_sl    import MACrossoverWithSL
+# from strategies.pairs_trading      import PairsTradingStrategy
+# from strategies.factor_model       import FactorModelStrategy
+# from strategies.stat_arb           import StatArbStrategy
+# from strategies.POSITIONAL_2_3_DAY.random_forest_strat import RandomForestStrategy
+# from strategies.ADVANCED_ML.lstm_strat         import LSTMStrategy
+
+# STRATEGY_MAP = {
+#     "sma":      SMAcrossover,
+#     "rsi":      RSIMeanRevert,
+#     "momentum": MomentumStrategy,
+#     "ma_sl":    MACrossoverWithSL,
+#     "pairs":    PairsTradingStrategy,
+#     "factor":   FactorModelStrategy,
+#     "stat_arb": StatArbStrategy,
+#     "rf":       RandomForestStrategy,
+#     "lstm":     LSTMStrategy,
+#     "scalp1": ScalpOneMin,
+#     "scalp5": ScalpFiveMin,
+# }
+
+
+from strategies.INTRADAY.scalp_1m                      import ScalpOneMin
+from strategies.INTRADAY.scalp_5m                      import ScalpFiveMin
+from strategies.POSITIONAL_2_3_DAY.rsi_mean_revert     import RSIMeanRevert
+from strategies.POSITIONAL_4_5_DAY.momentum            import MomentumStrategy
+from strategies.POSITIONAL_2_3_DAY.ma_crossover_sl     import MACrossoverWithSL
 from strategies.POSITIONAL_2_3_DAY.random_forest_strat import RandomForestStrategy
-from strategies.ADVANCED_ML.lstm_strat         import LSTMStrategy
+from strategies.POSITIONAL_2_3_DAY.rs_breakout         import RSBreakoutStrategy
+from strategies.ADVANCED_ML.lstm_strat                 import LSTMStrategy
 
 STRATEGY_MAP = {
-    "sma":      SMAcrossover,
-    "rsi":      RSIMeanRevert,
-    "momentum": MomentumStrategy,
-    "ma_sl":    MACrossoverWithSL,
-    "pairs":    PairsTradingStrategy,
-    "factor":   FactorModelStrategy,
-    "stat_arb": StatArbStrategy,
-    "rf":       RandomForestStrategy,
-    "lstm":     LSTMStrategy,
-    "scalp1": ScalpOneMin,
-    "scalp5": ScalpFiveMin,
+    "rsi":         RSIMeanRevert,
+    "momentum":    MomentumStrategy,
+    "ma_sl":       MACrossoverWithSL,
+    "rf":          RandomForestStrategy,
+    "rs_breakout": RSBreakoutStrategy,
+    "lstm":        LSTMStrategy,
+    "scalp1":      ScalpOneMin,
+    "scalp5":      ScalpFiveMin,
 }
 
 log = get_logger("main")
