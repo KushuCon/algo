@@ -1,2 +1,11 @@
 __pycache__
 logs
+qwen.txt
+
+.gitignore
+deepseek.ps1
+
+claude.ps1
+glm.ps1
+
+deepseek.cmd
