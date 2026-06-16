@@ -24,9 +24,9 @@
 # ACTIVE_STRATEGY = "sma_crossover"
 
 # # ─── Risk Management ──────────────────────────────────────────────────────────
-# MAX_POSITION_PCT     = 0.10   # Max 10% of portfolio in any single stock
+MAX_POSITION_PCT     = 0.12 
 # STOP_LOSS_PCT        = 0.02   # Exit if position drops 2% from entry
-# TAKE_PROFIT_PCT      = 0.06   # Exit if position gains 6% from entry
+TAKE_PROFIT_PCT      = 0.10 
 # MAX_DAILY_LOSS_PCT   = 0.05   # Pause trading if daily loss > 5% of portfolio
 # CLOSE_ALL_EOD        = True   # Close all positions before market close
 
@@ -171,7 +171,7 @@ DATA_PROVIDER       = "twelvedata"
 TWELVE_DATA_API_KEY = "0bec98c23b3142a590d4f9efe7520fe1"
 
 # ─── Universe of stocks to trade ──────────────────────────────────────────────
-SYMBOLS = ["NVDA", "TSLA", "AMD", "QCOM", "MU", "ARM", "NOW", "STX", "MRVL", "GE"]
+SYMBOLS = ["NVDA", "TSLA", "AMD", "QCOM", "MU", "ARM", "NOW", "STX", "MRVL", "GE", "WDC"]
 
 # ─── Strategy to use ──────────────────────────────────────────────────────────
 ACTIVE_STRATEGY = "momentum"
@@ -304,3 +304,7 @@ MOMENTUM_SCALE_TIERS = [(0.05, 0.33), (0.10, 0.33)]
 MOMENTUM_QUALITY_FILTER = True
 MOMENTUM_SECTOR_NEUTRAL = True
 MOMENTUM_CORR_CAP = 3
+MOMENTUM_LOOKBACK_FAST = 10
+MOMENTUM_VOL_MULT   = 1.2 
+MOMENTUM_SCALE_PCT  = 0.05
+MOMENTUM_SELL_THRESH = 0.02  
