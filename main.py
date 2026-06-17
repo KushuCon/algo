@@ -38,11 +38,11 @@ from utils.logger import get_logger
 
 from strategies.INTRADAY.scalp_1m                      import ScalpOneMin
 from strategies.INTRADAY.scalp_5m                      import ScalpFiveMin
-from strategies.POSITIONAL_2_3_DAY.rsi_mean_revert     import RSIMeanRevert
-from strategies.POSITIONAL_4_5_DAY.momentum            import MomentumStrategy
-from strategies.POSITIONAL_2_3_DAY.ma_crossover_sl     import MACrossoverWithSL
-from strategies.POSITIONAL_2_3_DAY.random_forest_strat import RandomForestStrategy
-from strategies.POSITIONAL_2_3_DAY.rs_breakout         import RSBreakoutStrategy
+from strategies.archieve.rsi_mean_revert     import RSIMeanRevert
+from strategies.momentum            import MomentumStrategy
+from strategies.archieve.ma_crossover_sl     import MACrossoverWithSL
+from strategies.archieve.random_forest_strat import RandomForestStrategy
+from strategies.rs_breakout         import RSBreakoutStrategy
 from strategies.ADVANCED_ML.lstm_strat                 import LSTMStrategy
 
 STRATEGY_MAP = {

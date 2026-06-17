@@ -23,12 +23,7 @@
 # # Options: "sma_crossover" | "rsi_mean_revert" | "momentum"
 # ACTIVE_STRATEGY = "sma_crossover"
 
-# # ─── Risk Management ──────────────────────────────────────────────────────────
-MAX_POSITION_PCT     = 0.12 
-# STOP_LOSS_PCT        = 0.02   # Exit if position drops 2% from entry
-TAKE_PROFIT_PCT      = 0.10 
-# MAX_DAILY_LOSS_PCT   = 0.05   # Pause trading if daily loss > 5% of portfolio
-# CLOSE_ALL_EOD        = True   # Close all positions before market close
+
 
 # # ─── SMA Crossover Strategy Params ────────────────────────────────────────────
 # SMA_FAST_PERIOD  = 9    # Fast SMA period (days)
@@ -158,6 +153,15 @@ Replace ALPACA_API_KEY and ALPACA_SECRET_KEY with your actual keys.
 Get free paper trading keys: https://app.alpaca.markets
 """
 
+
+# # ─── Risk Management ──────────────────────────────────────────────────────────
+MAX_POSITION_PCT     = 0.12 
+# STOP_LOSS_PCT        = 0.02   # Exit if position drops 2% from entry
+TAKE_PROFIT_PCT      = 0.10 
+# MAX_DAILY_LOSS_PCT   = 0.05   # Pause trading if daily loss > 5% of portfolio
+# CLOSE_ALL_EOD        = True   # Close all positions before market close
+
+
 # ─── Alpaca API Keys ───────────────────────────────────────────────────────────
 ALPACA_API_KEY    = "PKUB3KATFKFW3UGRCR4FJCU2AI"
 ALPACA_SECRET_KEY = "BpYWw6tWAm9nUTaAFztrh38BwkaBxYutQFvnCcHgeEfH"
@@ -177,9 +181,8 @@ SYMBOLS = ["NVDA", "TSLA", "AMD", "QCOM", "MU", "ARM", "NOW", "STX", "MRVL", "GE
 ACTIVE_STRATEGY = "momentum"
 
 # ─── Risk Management ──────────────────────────────────────────────────────────
-MAX_POSITION_PCT     = 0.10
+
 STOP_LOSS_PCT        = 0.02
-TAKE_PROFIT_PCT      = 0.06
 MAX_DAILY_LOSS_PCT   = 0.05
 CLOSE_ALL_EOD        = True
 
@@ -241,37 +244,37 @@ RF_BUY_THRESH     = 0.60
 RF_SELL_THRESH    = 0.40
 RF_RETRAIN_EVERY  = 1
 
-# ─── LSTM ML Params ───────────────────────────────────────────────────────────
-LSTM_SEQ_LEN       = 20
-LSTM_TRAIN_BARS    = 300
-LSTM_HIDDEN        = 64
-LSTM_LAYERS        = 2
-LSTM_EPOCHS        = 20
-LSTM_LR            = 1e-3
-LSTM_BATCH         = 32
-LSTM_BUY_THRESH    = 0.60
-LSTM_SELL_THRESH   = 0.40
-LSTM_RETRAIN_EVERY = 5
+# # ─── LSTM ML Params ───────────────────────────────────────────────────────────
+# LSTM_SEQ_LEN       = 20
+# LSTM_TRAIN_BARS    = 300
+# LSTM_HIDDEN        = 64
+# LSTM_LAYERS        = 2
+# LSTM_EPOCHS        = 20
+# LSTM_LR            = 1e-3
+# LSTM_BATCH         = 32
+# LSTM_BUY_THRESH    = 0.60
+# LSTM_SELL_THRESH   = 0.40
+# LSTM_RETRAIN_EVERY = 5
 
-# ─── Scalp Strategy Params ────────────────────────────────────────────────────
-SCALP1_RSI_PERIOD     = 9
-SCALP1_RSI_OVERSOLD   = 35
-SCALP1_RSI_OVERBOUGHT = 65
-SCALP1_VOL_PERIOD     = 20
-SCALP1_VOL_MULT       = 1.5
-SCALP1_EOD_CUTOFF     = "15:30"
+# # ─── Scalp Strategy Params ────────────────────────────────────────────────────
+# SCALP1_RSI_PERIOD     = 9
+# SCALP1_RSI_OVERSOLD   = 35
+# SCALP1_RSI_OVERBOUGHT = 65
+# SCALP1_VOL_PERIOD     = 20
+# SCALP1_VOL_MULT       = 1.5
+# SCALP1_EOD_CUTOFF     = "15:30"
 
-SCALP5_EMA_FAST    = 8
-SCALP5_EMA_SLOW    = 21
-SCALP5_MACD_FAST   = 12
-SCALP5_MACD_SLOW   = 26
-SCALP5_MACD_SIG    = 9
-SCALP5_MIN_RIBBON  = 0.002
-SCALP5_OPEN_SKIP   = "09:45"
-SCALP5_EOD_CUTOFF  = "15:30"
+# SCALP5_EMA_FAST    = 8
+# SCALP5_EMA_SLOW    = 21
+# SCALP5_MACD_FAST   = 12
+# SCALP5_MACD_SLOW   = 26
+# SCALP5_MACD_SIG    = 9
+# SCALP5_MIN_RIBBON  = 0.002
+# SCALP5_OPEN_SKIP   = "09:45"
+# SCALP5_EOD_CUTOFF  = "15:30"
 
-SCALP_STOP_LOSS_PCT   = 0.005
-SCALP_TAKE_PROFIT_PCT = 0.01
+# SCALP_STOP_LOSS_PCT   = 0.005
+# SCALP_TAKE_PROFIT_PCT = 0.01
 
 # ─── RS Breakout Strategy ─────────────────────────────────────────────────────
 RS_LOOKBACK        = 10
@@ -308,3 +311,65 @@ MOMENTUM_LOOKBACK_FAST = 10
 MOMENTUM_VOL_MULT   = 1.2 
 MOMENTUM_SCALE_PCT  = 0.05
 MOMENTUM_SELL_THRESH = 0.02  
+
+
+# ─── config_additions.py ───────────────────────────────────────────────────────
+# Add these blocks to your existing config.py
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ─── Universe — 15 stocks (Yahoo 8 + Alpaca 7) ───────────────────────────────
+# Yahoo Finance (liquid, reliable daily bars):
+SYMBOLS_YAHOO  = ["NVDA", "AMD", "ARM", "MU", "QCOM", "TSLA", "GE", "PLTR"]
+
+# Alpaca (newer / spinoff stocks Yahoo sometimes rate-limits):
+SYMBOLS_ALPACA = ["SNDK", "WDC", "CRWV", "STX", "BE", "SMCI", "MRVL"]
+
+# Combined (used by run.py and backtest.py):
+SYMBOLS = SYMBOLS_YAHOO + SYMBOLS_ALPACA
+
+# ─── Risk Management (updated) ───────────────────────────────────────────────
+   # 12% per position (was 0.10)
+STOP_LOSS_PCT      = 0.02    # 2% for momentum/rs_breakout only
+    # 10% for momentum/rs_breakout only
+
+# ─── DipRider Strategy Params (NEW) ──────────────────────────────────────────
+DIPRIDER_TRAIL_PCT      = 0.08   # trailing stop: 8% below peak
+DIPRIDER_HARD_STOP_PCT  = 0.25   # hard exit: -25% from average cost
+DIPRIDER_AVG_DOWN_PCT   = 0.15   # average down when -15% from entry
+DIPRIDER_DIP_MIN_PCT    = 0.03   # minimum dip to enter (filter noise)
+DIPRIDER_DIP_MAX_PCT    = 0.20   # maximum dip (beyond = crash, skip)
+DIPRIDER_SLOW_LOOKBACK  = 20     # slow momentum window
+
+# ─── Momentum Strategy Params (updated from previous session) ────────────────
+MOMENTUM_LOOKBACK       = 20
+MOMENTUM_LOOKBACK_FAST  = 10
+MOMENTUM_THRESHOLD      = 0.05
+MOMENTUM_VOL_MULT       = 1.2
+MOMENTUM_SCALE_PCT      = 0.05
+MOMENTUM_SELL_THRESH    = 0.02
+
+# ─────────────────────────────────────────────────────────────────────────────
+# NOTES ON THE 15 STOCKS:
+#
+# NVDA    — AI GPU dominance, most liquid, daily driver
+# AMD     — AI GPU #2, strong momentum cycles
+# ARM     — AI chip architecture, high-beta
+# MU      — Memory supercycle, tracks DRAM/NAND demand
+# QCOM    — Mobile + edge AI, defensive-ish
+# TSLA    — High vol, momentum-friendly
+# GE      — GE Aerospace, industrials AI theme
+# PLTR    — AI/data analytics, government contracts
+#
+# SNDK    — SanDisk spinoff (flash memory), extreme momentum
+# WDC     — Western Digital (storage), cycles with MU
+# CRWV    — CoreWeave (AI cloud), 2025 IPO, high beta
+# STX     — Seagate (HDD), data centre storage demand
+# BE      — Bloom Energy (fuel cells), AI power theme
+# SPCX    — SPAC/new issue ETF (diversifier)
+# DRAM    — Memory ETF (diversifier, tracks MU/SNDK basket)
+#
+# DATA SOURCE NOTE:
+#   CRWV — 2025 IPO, may have <1yr of history. Use Alpaca, not Yahoo.
+#   SPCX — ETF, Yahoo usually works fine
+#   DRAM — ETF, Yahoo usually works fine
+# ─────────────────────────────────────────────────────────────────────────────
